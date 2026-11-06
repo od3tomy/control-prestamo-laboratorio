@@ -10,11 +10,13 @@ La página está publicada en:
 
 Formulario directo para compartir por QR:
 
-`https://od3tomy.github.io/control-prestamo-laboratorio/formulario_prestamo.html?publico=1`
+`https://od3tomy.github.io/control-prestamo-laboratorio/?publico=1`
 
 Afiche PDF con el QR:
 
 `https://od3tomy.github.io/control-prestamo-laboratorio/QR_Control_Prestamo.pdf`
+
+> El formulario usa automáticamente esta URL publicada cuando se abre desde el archivo local. Si antes guardaste otra URL, usa el botón **Usar URL publicada** en la sección de compartir.
 
 ## Acceso administrador
 

@@ -711,6 +711,19 @@
 
         .qr-hint { font-size: 0.73rem; color: var(--text-secondary); margin-top: 8px; }
 
+        .qr-reset-link {
+            background: none;
+            border: 0;
+            padding: 0;
+            color: var(--brand);
+            font: inherit;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            cursor: pointer;
+        }
+
+        .qr-reset-link:hover { color: var(--brand-solid-hover); }
+
         .share-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 
         .share-btn {
@@ -1243,6 +1256,7 @@
                         <button type="button" class="btn btn-primary" id="btnActualizarQR">Actualizar QR</button>
                     </div>
                     <p class="qr-warn" id="qrWarn" hidden>&#9888; El QR apunta a una URL local (file://). Publica el formulario y pega la URL pública aquí para que funcione en el celular.</p>
+                    <p class="qr-hint">Si no tienes la URL, usa la publicada en GitHub Pages. <button type="button" class="qr-reset-link" id="btnResetQR">Usar URL publicada</button></p>
                     <p class="qr-hint">El enlace y la URL se guardan únicamente en este navegador.</p>
                     <p class="admin-note">Acceso administrador por PIN. Este control es una barrera de interfaz; para seguridad real se necesita un servidor.</p>
                     <button type="button" class="btn btn-secondary" id="btnChangePin">Cambiar PIN de este navegador</button>
@@ -1363,6 +1377,8 @@
             var ADMIN_SESSION_KEY = 'prestamos_admin_session';
             var ADMIN_PIN_KEY = 'prestamos_admin_pin';
             var CONTACT_KEY = 'prestamos_contacto';
+            // URL pública publicada en GitHub Pages.
+            var DEFAULT_PUBLIC_URL = 'https://od3tomy.github.io/control-prestamo-laboratorio/';
             // PIN de acceso administrador. Puedes cambiarlo aquí.
             var DEFAULT_ADMIN_PIN = 'tomy';
 
@@ -2391,7 +2407,10 @@
             }
 
             function getBaseShareUrl() {
-                return getSavedShareUrl() || window.location.href;
+                var saved = getSavedShareUrl();
+                if (saved) return saved;
+                if (/^https?:/i.test(window.location.href)) return window.location.href;
+                return DEFAULT_PUBLIC_URL;
             }
 
             function cleanBaseUrl(url) {
@@ -2476,6 +2495,17 @@
                 var publicUrl = buildPublicUrl(base);
                 var ok = await generarQR(publicUrl);
                 showToast(ok ? 'QR público actualizado' : 'No se pudo generar el QR. Revisa tu conexión.', ok ? 'success' : 'error');
+            }
+
+            function resetPublicUrl() {
+                try { localStorage.removeItem('prestamos_qr_url'); } catch (e) { /* sin almacenamiento */ }
+                $('#qrUrl').value = DEFAULT_PUBLIC_URL;
+
+                if ($('#qrDetails').open) {
+                    generarQR(buildPublicUrl(DEFAULT_PUBLIC_URL));
+                }
+
+                showToast('URL publicada restablecida', 'success');
             }
 
             function guardarContacto() {
@@ -2850,6 +2880,8 @@
                     $('#qrUrl').value = cleanBaseUrl(savedUrl);
                 } else if (/^https?:/i.test(window.location.href)) {
                     $('#qrUrl').value = cleanBaseUrl(window.location.href);
+                } else {
+                    $('#qrUrl').value = DEFAULT_PUBLIC_URL;
                 }
 
                 var contact = getStoredContact();
@@ -2995,6 +3027,7 @@
                 $('#btnCopiar').addEventListener('click', copiarEnlace);
                 $('#btnActualizarQR').addEventListener('click', actualizarQR);
                 $('#btnGuardarContacto').addEventListener('click', guardarContacto);
+                $('#btnResetQR').addEventListener('click', resetPublicUrl);
                 $('#btnChangePin').addEventListener('click', cambiarPinAdmin);
                 $('#btnDescargarQR').addEventListener('click', descargarQR);
                 $('#btnQRPDF').addEventListener('click', descargarQRPDF);
