@@ -1,0 +1,3057 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Formulario para el registro y control de préstamo de laboratorio, equipos y/o elementos. Código GAF-FOR-127.">
+    <meta name="theme-color" content="#1a73e8">
+    <title>Control de Préstamo de Laboratorio, Equipos y/o Elementos</title>
+
+    <!-- Tema aplicado antes del primer render para evitar destellos -->
+    <script>
+        (function () {
+            try {
+                var guardado = localStorage.getItem('prestamos_theme');
+                // La referencia visual es oscura: se usa ese tema por defecto.
+                var oscuro = guardado ? guardado === 'dark' : true;
+                document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+            } catch (e) { /* sin preferencias guardadas */ }
+        })();
+    </script>
+
+    <style>
+        :root {
+            color-scheme: light;
+
+            --brand: #2563eb;
+            --brand-solid: #2563eb;
+            --brand-solid-hover: #1d4ed8;
+            --brand-soft: #e8efff;
+            --brand-contrast: #ffffff;
+
+            --background: #eef2f9;
+            --surface: #ffffff;
+            --surface-2: #f5f8fd;
+
+            --text: #0f172a;
+            --text-secondary: #5b6b85;
+            --border: #dbe3f0;
+
+            --error: #dc2626;
+            --error-soft: #fee2e2;
+            --success: #15803d;
+            --success-soft: #dcfce7;
+            --warning: #b45309;
+            --warning-soft: #fef3c7;
+
+            --section-reserva: #2563eb;
+            --section-prestamo: #d97706;
+            --section-devolucion: #15803d;
+
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.10);
+            --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.18);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        [data-theme="dark"] {
+            color-scheme: dark;
+
+            --brand: #6ea8fe;
+            --brand-solid: #2563eb;
+            --brand-solid-hover: #3b82f6;
+            --brand-soft: rgba(59, 130, 246, 0.16);
+            --brand-contrast: #ffffff;
+
+            --background: #060a12;
+            --surface: #0d1524;
+            --surface-2: #111b2d;
+
+            --text: #e8eefb;
+            --text-secondary: #91a3bd;
+            --border: #1e2c42;
+
+            --error: #f87171;
+            --error-soft: rgba(248, 113, 113, 0.12);
+            --success: #4ade80;
+            --success-soft: rgba(74, 222, 128, 0.12);
+            --warning: #fbbf24;
+            --warning-soft: rgba(251, 191, 36, 0.12);
+
+            --section-reserva: #60a5fa;
+            --section-prestamo: #fbbf24;
+            --section-devolucion: #4ade80;
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 36px rgba(0, 0, 0, 0.35);
+            --shadow-md: 0 18px 48px rgba(0, 0, 0, 0.45);
+            --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.60);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        [hidden] { display: none !important; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background:
+                radial-gradient(1100px 560px at 88% -12%, rgba(37, 99, 235, 0.28), transparent 62%),
+                radial-gradient(800px 480px at -8% 18%, rgba(14, 165, 233, 0.14), transparent 58%),
+                var(--background);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background-color 0.25s, color 0.25s;
+        }
+
+        [data-theme="light"] body {
+            background:
+                radial-gradient(900px 460px at 90% -12%, rgba(37, 99, 235, 0.14), transparent 62%),
+                radial-gradient(700px 420px at -5% 18%, rgba(14, 165, 233, 0.10), transparent 58%),
+                var(--background);
+            background-attachment: fixed;
+        }
+
+        .brand-bar {
+            background: transparent;
+            border-bottom: 0;
+            padding: 14px 20px 0;
+        }
+
+        .brand-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-plate {
+            display: inline-flex;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 12px;
+            padding: 8px 14px;
+            box-shadow: 0 14px 36px rgba(2, 8, 23, 0.35);
+        }
+
+        [data-theme="light"] .brand-plate {
+            border-color: var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand-inner img {
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+        }
+
+        .header {
+            background:
+                radial-gradient(900px 340px at 15% 0%, rgba(96, 165, 250, 0.55), transparent 62%),
+                linear-gradient(135deg, #0b2a6b 0%, #124bb3 48%, #0b6bcb 100%);
+            color: #fff;
+            padding: 30px 20px 38px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+            box-shadow: 0 24px 60px rgba(2, 8, 23, 0.45);
+        }
+
+        .header-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            max-width: 720px;
+        }
+
+        .header p {
+            opacity: 0.85;
+            margin-top: 4px;
+            font-size: 0.88rem;
+        }
+
+        .code-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 3px 14px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            margin-top: 10px;
+            backdrop-filter: blur(6px);
+            white-space: nowrap;
+        }
+
+        .theme-toggle {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-size: 1.15rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .theme-toggle:hover { background: rgba(255, 255, 255, 0.28); transform: rotate(12deg); }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .admin-access-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            height: 42px;
+            padding: 0 16px;
+            border: 1px solid rgba(255, 255, 255, 0.40);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+
+        .admin-access-btn:hover { background: rgba(255, 255, 255, 0.28); }
+        .admin-access-btn.is-admin {
+            background: rgba(74, 222, 128, 0.20);
+            border-color: rgba(74, 222, 128, 0.60);
+        }
+        .admin-access-btn.is-admin:hover { background: rgba(74, 222, 128, 0.32); }
+        .admin-access-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .admin-access-short { display: none; }
+
+        .container {
+            max-width: 960px;
+            margin: -18px auto 0;
+            padding: 0 16px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        body.modo-publico .container { margin-top: 14px; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow-sm);
+            padding: 15px 18px;
+        }
+
+        [data-theme="dark"] .stat {
+            background: rgba(13, 21, 36, 0.82);
+            backdrop-filter: blur(12px);
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-pending { border-left-color: var(--section-prestamo); }
+        .stat-done { border-left-color: var(--section-devolucion); }
+        .stat:first-child { border-left-color: var(--section-reserva); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: box-shadow 0.2s, background-color 0.25s, border-color 0.25s;
+        }
+
+        [data-theme="dark"] .card {
+            background: rgba(13, 21, 36, 0.82);
+            backdrop-filter: blur(12px);
+        }
+
+        .card:hover { box-shadow: var(--shadow-md); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 22px;
+        }
+
+        .card-header .icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+
+        .card-header h2 { font-size: 1.02rem; font-weight: 600; }
+
+        .card-body { padding: 0 22px 20px; }
+
+        .section-reserva .card-header { border-bottom: 2px solid var(--section-reserva); }
+        .section-reserva .card-header .icon { background: var(--section-reserva); color: #fff; }
+        .section-prestamo .card-header { border-bottom: 2px solid var(--section-prestamo); }
+        .section-prestamo .card-header .icon { background: var(--section-prestamo); }
+        .section-devolucion .card-header { border-bottom: 2px solid var(--section-devolucion); }
+        .section-devolucion .card-header .icon { background: var(--section-devolucion); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+        .form-row.full { grid-template-columns: 1fr; }
+
+        .form-group { display: flex; flex-direction: column; border: 0; }
+
+        .form-group label,
+        .form-group legend {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-group .required { color: var(--error); margin-left: 2px; }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface-2);
+            transition: border-color 0.2s, box-shadow 0.2s, background-color 0.25s;
+            width: 100%;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: var(--text-secondary); opacity: 0.7; }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-soft);
+        }
+
+        .form-group input.error,
+        .form-group select.error,
+        .form-group textarea.error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px var(--error-soft);
+        }
+
+        .form-group .error-msg {
+            font-size: 0.73rem;
+            color: var(--error);
+            margin-top: 3px;
+            display: none;
+        }
+
+        .form-group .error-msg.show { display: block; }
+
+        .form-group textarea { resize: vertical; min-height: 74px; }
+
+        .radio-fieldset { margin-top: 0; }
+        .radio-group { display: flex; gap: 22px; padding: 11px 0; }
+        .radio-group.error input[type="radio"] { outline: 2px solid var(--error); outline-offset: 2px; border-radius: 50%; }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text);
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 400;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--brand-solid);
+            cursor: pointer;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 1.5px solid transparent;
+            border-radius: var(--radius-sm);
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .btn:focus-visible,
+        .share-btn:focus-visible,
+        .theme-toggle:focus-visible,
+        .qr-section summary:focus-visible,
+        .edit-banner button:focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.30);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            box-shadow: 0 14px 32px rgba(37, 99, 235, 0.40);
+        }
+
+        .btn-secondary { background: transparent; color: var(--brand); border-color: var(--border); }
+        .btn-secondary:hover:not(:disabled) { background: var(--brand-soft); border-color: var(--brand); }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(22, 163, 74, 0.24);
+        }
+        .btn-success:hover:not(:disabled) { filter: brightness(1.06); }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(217, 119, 6, 0.22);
+        }
+        .btn-warning:hover:not(:disabled) { filter: brightness(1.06); }
+
+        .btn-ghost-danger { background: transparent; color: var(--error); border-color: transparent; }
+        .btn-ghost-danger:hover:not(:disabled) { background: var(--error-soft); }
+
+        .btn-mini {
+            padding: 4px 9px;
+            font-size: 0.72rem;
+            border-radius: 6px;
+            border-color: var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        .btn-mini:hover { background: var(--surface-2); color: var(--text); }
+        .btn-mini.btn-ok { color: var(--success); border-color: currentColor; }
+        .btn-mini.btn-ok:hover { background: var(--success-soft); }
+        .btn-mini.btn-mini-danger { color: var(--error); }
+        .btn-mini.btn-mini-danger:hover { background: var(--error-soft); }
+
+        .edit-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: var(--warning-soft);
+            border: 1px solid var(--warning);
+            color: var(--text);
+            border-radius: var(--radius);
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            font-size: 0.86rem;
+        }
+
+        .edit-banner strong { color: var(--warning); }
+
+        .edit-banner button {
+            background: transparent;
+            border: 1px solid var(--warning);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .edit-banner button:hover { background: var(--warning); color: #fff; }
+
+        /* ===== Registros ===== */
+        .records-section { margin-top: 16px; }
+
+        .records-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 22px 12px;
+        }
+
+        .records-head h3 { font-size: 0.98rem; font-weight: 600; }
+
+        .records-count {
+            display: inline-block;
+            background: var(--brand-soft);
+            color: var(--brand);
+            padding: 1px 10px;
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .records-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .records-tools input[type="search"],
+        .records-tools select {
+            padding: 8px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.83rem;
+            font-family: inherit;
+        }
+
+        .records-tools input[type="search"] { min-width: 230px; }
+        .records-tools input[type="search"]:focus,
+        .records-tools select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+
+        .records-note {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            margin: 0 22px 8px;
+            padding: 10px 12px;
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            background: var(--brand-soft);
+            border-radius: var(--radius-sm);
+        }
+
+        .records-table { overflow-x: auto; padding: 0 14px 14px; }
+
+        .records-table table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.79rem;
+            min-width: 820px;
+            table-layout: fixed;
+        }
+
+        .records-table th {
+            background: var(--surface-2);
+            padding: 10px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .records-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            overflow-wrap: break-word;
+        }
+
+        .records-table tbody tr:hover td { background: var(--surface-2); }
+        .records-table .col-num { text-align: center; color: var(--text-secondary); }
+        .records-table .col-actions { text-align: right; white-space: nowrap; }
+        .records-table .cell-strong { font-weight: 600; }
+        .records-table .cell-sub { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .records-table .col-actions .btn-mini { margin-left: 4px; }
+
+        .chip {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.71rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .chip-pending { background: var(--warning-soft); color: var(--warning); }
+        .chip-ok { background: var(--success-soft); color: var(--success); }
+
+        .empty-state { text-align: center; padding: 34px 16px; color: var(--text-secondary); }
+        .empty-state .empty-icon { font-size: 2.4rem; opacity: 0.35; margin-bottom: 6px; }
+        .empty-state .empty-title { font-weight: 600; color: var(--text); }
+
+        /* Tarjetas de registro (solo móvil) */
+        .records-cards { display: none; }
+
+        .record-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+        }
+
+        .rc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .rc-num { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+        .rc-title { font-size: 0.95rem; margin-top: 6px; line-height: 1.35; }
+        .rc-line { font-size: 0.85rem; margin-top: 3px; }
+        .rc-sub { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .rc-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.75rem; color: var(--text-secondary); margin-top: 9px; }
+        .rc-obs { font-size: 0.76rem; color: var(--text-secondary); margin-top: 8px; border-left: 2px solid var(--border); padding-left: 8px; }
+        .rc-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+        .rc-actions .btn { flex: 1 1 auto; }
+
+        .records-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+        }
+
+        .records-actions .spacer { flex: 1; }
+        .records-actions .btn { padding: 8px 14px; font-size: 0.8rem; }
+
+        .print-title { display: none; }
+        .print-sub { display: none; }
+
+        /* ===== Compartir ===== */
+        .qr-section summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 16px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .qr-section summary::-webkit-details-marker { display: none; }
+        .qr-section summary .chev { margin-left: auto; transition: transform 0.2s; font-size: 0.8rem; color: var(--text-secondary); }
+        .qr-section[open] summary .chev { transform: rotate(180deg); }
+
+        .qr-body { text-align: center; padding: 0 22px 22px; }
+
+        .qr-container {
+            display: inline-block;
+            padding: 16px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            min-height: 192px;
+            min-width: 192px;
+        }
+
+        .qr-container img,
+        .qr-container canvas { display: block; margin: 0 auto; }
+
+        .qr-fallback { color: #5f6b7a; font-size: 0.8rem; padding: 48px 10px; }
+
+        .qr-hint { font-size: 0.73rem; color: var(--text-secondary); margin-top: 8px; }
+
+        .share-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+
+        .share-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .share-btn.whatsapp { background: #25d366; color: #fff; }
+        .share-btn.whatsapp:hover { background: #1da851; }
+        .share-btn.copy-link { background: var(--brand-soft); color: var(--brand); }
+        .share-btn.copy-link:hover { filter: brightness(0.96); }
+        .share-btn.qr-pdf { background: var(--brand-solid); color: #fff; }
+        .share-btn.qr-pdf:hover { background: var(--brand-solid-hover); }
+        .share-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .url-config {
+            margin-top: 18px;
+            text-align: left;
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+        }
+
+        .url-config label {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .url-config-row { display: flex; gap: 8px; }
+
+        .url-config-row input[type="url"] {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .url-config-row input[type="url"]:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+        .url-config .btn { padding: 9px 14px; font-size: 0.8rem; }
+
+        .qr-warn {
+            margin-top: 8px;
+            font-size: 0.76rem;
+            color: var(--error);
+            background: var(--error-soft);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: #323232;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 0.87rem;
+            z-index: 1000;
+            transition: transform 0.3s ease, visibility 0.3s;
+            box-shadow: var(--shadow-lg);
+            max-width: calc(100vw - 32px);
+            text-align: center;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); visibility: visible; }
+        .toast.toast-error { background: #b3261e; }
+        .toast.toast-success { background: #1e8e3e; }
+
+        .admin-link {
+            background: none;
+            border: 0;
+            color: var(--text-secondary);
+            font: inherit;
+            font-size: 0.73rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .admin-link:hover { color: var(--brand); background: var(--brand-soft); }
+
+        .public-hint {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            background: var(--brand-soft);
+            color: var(--text-secondary);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.84rem;
+        }
+
+        .public-hint strong { color: var(--brand); }
+
+        .config-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .admin-note { font-size: 0.72rem; color: var(--text-secondary); margin-top: 8px; }
+        .admin-note code { background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }
+        #btnChangePin { margin-top: 8px; }
+
+        .url-config input[type="tel"],
+        .url-config input[type="email"],
+        .url-config input[type="text"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .url-config input:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-soft);
+        }
+
+        /* ===== Modales ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 16, 0.68);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 2000;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 420px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 22px;
+        }
+
+        .modal-wide { max-width: 560px; }
+        .modal h2 { font-size: 1.1rem; margin-bottom: 6px; }
+        .modal p { font-size: 0.86rem; color: var(--text-secondary); }
+
+        .modal input[type="password"] {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-top: 14px;
+        }
+
+        .modal input[type="password"]:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px var(--brand-soft);
+        }
+
+        .modal-error { color: var(--error) !important; font-size: 0.8rem !important; margin-top: 8px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 18px; }
+        .modal-actions .btn { flex: 0 0 auto; }
+
+        .send-summary {
+            margin-top: 14px;
+            padding: 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.76rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 40vh;
+            overflow: auto;
+            font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+            color: var(--text);
+        }
+
+        @media (max-width: 480px) {
+            .modal { padding: 18px; }
+            .modal-actions .btn { flex: 1 1 auto; width: 100%; }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px 16px 30px;
+            color: var(--text-secondary);
+            font-size: 0.73rem;
+        }
+
+        @media (max-width: 640px) {
+            body, [data-theme="light"] body { background-attachment: scroll; }
+            .brand-bar { padding: 12px 16px 0; }
+            .brand-plate { padding: 6px 10px; border-radius: 10px; }
+            .brand-inner img { max-width: 220px; }
+            .admin-access-btn { width: auto; padding: 0 12px; }
+            .admin-access-text { display: none; }
+            .admin-access-short { display: inline; }
+            .form-row { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.12rem; }
+            .header { padding: 20px 16px 30px; }
+            .code-badge { font-size: 0.68rem; padding: 3px 10px; }
+            .stat { padding: 12px 14px; }
+            .stat-value { font-size: 1.25rem; }
+            .card-body { padding: 0 16px 16px; }
+            .card-header { padding: 12px 16px; }
+            .records-head { padding: 14px 16px 10px; }
+            .records-note { margin: 0 16px 8px; }
+            .records-actions { padding: 12px 16px; }
+            .records-actions .spacer { display: none; }
+            .records-actions .btn { flex: 1 1 auto; }
+            .records-tools { width: 100%; }
+            .records-tools input[type="search"] { flex: 1; min-width: 0; }
+            .url-config-row { flex-direction: column; }
+            .url-config .btn { justify-content: center; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+        }
+
+        @media (max-width: 700px) {
+            .records-table { display: none !important; }
+            .records-cards:not([hidden]) { display: grid; gap: 10px; padding: 0 16px 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { scroll-behavior: auto !important; transition: none !important; }
+        }
+
+        @page { margin: 0; }
+
+        @media print {
+            html, body {
+                background: #fff !important;
+                background-image: none !important;
+                color: #000;
+            }
+            body { padding: 12mm; }
+            .brand-bar { padding: 0 0 10px; border-bottom: 1px solid #999; margin-bottom: 14px; background: #fff; }
+            .brand-plate { border: 0; box-shadow: none; padding: 0; border-radius: 0; background: #fff; }
+            .brand-inner img { max-width: 300px; }
+            .header, .stats, #prestamoForm, .qr-section, .records-tools, .records-note,
+            .records-actions, .footer, .toast, .edit-banner, .card:hover { display: none !important; }
+            .container { max-width: none; margin: 0; padding: 0; }
+            .card, .records-section, .stat {
+                background: #fff !important;
+                color: #000 !important;
+                border-color: #999 !important;
+                box-shadow: none;
+                backdrop-filter: none !important;
+            }
+            .card, .records-section { border: 0; margin: 0; }
+            .records-section { display: block !important; }
+            .records-table { display: block !important; overflow: visible; padding: 0; }
+            .records-cards { display: none !important; }
+            .records-table table { min-width: 0; font-size: 10pt; }
+            .records-table th, .records-table td { border: 1px solid #999; background: #fff !important; color: #000 !important; }
+            .records-table .cell-sub { color: #333 !important; }
+            .records-table tr:hover td { background: #fff !important; }
+            .records-table .col-actions { display: none; }
+            .chip { background: #fff !important; color: #000 !important; border: 1px solid #999; }
+            .print-title { display: block; font-size: 14pt; font-weight: 700; margin-bottom: 4px; }
+            .print-sub { display: block; font-size: 9pt; color: #444; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="brand-bar">
+        <div class="brand-inner">
+            <div class="brand-plate">
+                <img id="brandLogo" src="uam-acreditacion25_horizontal_COLOR.png" alt="Universidad Autónoma de Manizales · Acreditación Institucional de Alta Calidad">
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-inner">
+            <div>
+                <h1>Control de Préstamo de Laboratorio, Equipos y/o Elementos</h1>
+                <p>Formulario de registro de préstamos, devoluciones y trazabilidad</p>
+                <span class="code-badge">Código: GAF-FOR-127 &middot; Versión: 1</span>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="admin-access-btn" id="btnAdminAccess" aria-label="Acceso administrador" title="Acceso administrador">&#128274; <span class="admin-access-text">Administrador</span><span class="admin-access-short">Admin</span></button>
+                <button type="button" class="theme-toggle" id="themeToggle" aria-label="Cambiar tema" title="Cambiar tema">&#127769;</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <p class="public-hint" id="publicHint" hidden>
+            <span aria-hidden="true">&#128221;</span>
+            <span><strong>Formulario público.</strong> Completa los datos y envía tu solicitud al laboratorio. No necesitas cuenta ni contraseña.</span>
+        </p>
+
+        <section class="stats admin-only" aria-label="Resumen de registros">
+            <div class="stat">
+                <span class="stat-value" id="statTotal">0</span>
+                <span class="stat-label">Registros</span>
+            </div>
+            <div class="stat stat-pending">
+                <span class="stat-value" id="statPendientes">0</span>
+                <span class="stat-label">Pendientes</span>
+            </div>
+            <div class="stat stat-done">
+                <span class="stat-value" id="statDevueltos">0</span>
+                <span class="stat-label">Devueltos</span>
+            </div>
+        </section>
+
+        <div class="edit-banner" id="editBanner" hidden>
+            <span>&#9998; <strong>Modo edición:</strong> <span id="editBannerText"></span></span>
+            <button type="button" id="btnCancelEdit">Cancelar edición</button>
+        </div>
+
+        <form id="prestamoForm" novalidate>
+            <div class="card section-reserva">
+                <div class="card-header">
+                    <div class="icon" aria-hidden="true">&#128203;</div>
+                    <h2>Solicitud de Reserva</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fechaPrestamo">Fecha para préstamo <span class="required" aria-hidden="true">*</span></label>
+                            <input type="date" id="fechaPrestamo" name="fechaPrestamo" required aria-required="true" aria-describedby="errFechaPrestamo">
+                            <span class="error-msg" id="errFechaPrestamo">Este campo es obligatorio</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="horaPrestamo">Hora para préstamo <span class="required" aria-hidden="true">*</span></label>
+                            <input type="time" id="horaPrestamo" name="horaPrestamo" required aria-required="true" aria-describedby="errHoraPrestamo">
+                            <span class="error-msg" id="errHoraPrestamo">Este campo es obligatorio</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <fieldset class="form-group radio-fieldset">
+                            <legend>El solicitante es un usuario <span class="required" aria-hidden="true">*</span></legend>
+                            <div class="radio-group" id="radioTipoUsuario" role="radiogroup" aria-describedby="errTipoUsuario">
+                                <label class="radio-option">
+                                    <input type="radio" name="tipoUsuario" value="Interno" required> Interno
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="tipoUsuario" value="Externo"> Externo
+                                </label>
+                            </div>
+                            <span class="error-msg" id="errTipoUsuario">Seleccione si es usuario interno o externo</span>
+                        </fieldset>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="quienSolicita">Quién solicita (nombre, cargo) <span class="required" aria-hidden="true">*</span></label>
+                            <input type="text" id="quienSolicita" name="quienSolicita" autocomplete="name" list="listaSolicitantes" maxlength="120" placeholder="Ej: Juan Pérez, Técnico de Laboratorio" required aria-required="true" aria-describedby="errQuienSolicita">
+                            <span class="error-msg" id="errQuienSolicita">Este campo es obligatorio</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="programa">Programa y/o dependencia <span class="required" aria-hidden="true">*</span></label>
+                            <input type="text" id="programa" name="programa" autocomplete="organization" list="listaProgramas" maxlength="120" placeholder="Ej: Departamento de Química" required aria-required="true" aria-describedby="errPrograma">
+                            <span class="error-msg" id="errPrograma">Este campo es obligatorio</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="correo">Correo electrónico <span class="required" aria-hidden="true">*</span></label>
+                            <input type="email" id="correo" name="correo" autocomplete="email" inputmode="email" maxlength="120" placeholder="correo@ejemplo.com" required aria-required="true" aria-describedby="errCorreo">
+                            <span class="error-msg" id="errCorreo">Ingrese un correo válido</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nombreEquipo">Laboratorio, equipo y/o elemento <span class="required" aria-hidden="true">*</span></label>
+                            <input type="text" id="nombreEquipo" name="nombreEquipo" list="listaEquipos" maxlength="120" placeholder="Ej: Microscopio Olympus CX23" required aria-required="true" aria-describedby="errNombreEquipo">
+                            <span class="error-msg" id="errNombreEquipo">Este campo es obligatorio</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="cantidad">Cantidad <span class="required" aria-hidden="true">*</span></label>
+                            <input type="number" id="cantidad" name="cantidad" min="1" max="9999" step="1" value="1" required aria-required="true" aria-describedby="errCantidad">
+                            <span class="error-msg" id="errCantidad">Ingrese una cantidad válida (1 a 9999)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-prestamo">
+                <div class="card-header">
+                    <div class="icon" aria-hidden="true">&#128229;</div>
+                    <h2>Préstamo de Laboratorio, Equipo y/o Elemento</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="obsPrestamo">Observaciones del préstamo</label>
+                            <textarea id="obsPrestamo" name="obsPrestamo" maxlength="500" placeholder="Estado del equipo al momento del préstamo, accesorios incluidos, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card section-devolucion">
+                <div class="card-header">
+                    <div class="icon" aria-hidden="true">&#128228;</div>
+                    <h2>Devolución del Laboratorio, Equipo y/o Elemento</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fechaDevolucion">Fecha de devolución</label>
+                            <input type="date" id="fechaDevolucion" name="fechaDevolucion" aria-describedby="errFechaDevolucion">
+                            <span class="error-msg" id="errFechaDevolucion">No puede ser anterior a la fecha de préstamo</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="horaDevolucion">Hora de devolución</label>
+                            <input type="time" id="horaDevolucion" name="horaDevolucion">
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="estadoLimpieza">Estado y limpieza</label>
+                            <select id="estadoLimpieza" name="estadoLimpieza">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="Bueno - Limpio">Bueno - Limpio</option>
+                                <option value="Bueno - Sucio">Bueno - Sucio</option>
+                                <option value="Regular - Limpio">Regular - Limpio</option>
+                                <option value="Regular - Sucio">Regular - Sucio</option>
+                                <option value="Malo - Limpio">Malo - Limpio</option>
+                                <option value="Malo - Sucio">Malo - Sucio</option>
+                                <option value="Dañado">Dañado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="obsDevolucion">Observaciones de devolución</label>
+                            <textarea id="obsDevolucion" name="obsDevolucion" maxlength="500" placeholder="Estado del equipo al momento de la devolución, daños observados, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="btnLimpiar">&#128465; Limpiar formulario</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmit">&#10003; Registrar préstamo</button>
+                </div>
+            </div>
+        </form>
+
+        <datalist id="listaSolicitantes"></datalist>
+        <datalist id="listaProgramas"></datalist>
+        <datalist id="listaEquipos"></datalist>
+
+        <details class="card qr-section admin-only" id="qrDetails">
+            <summary>
+                <span aria-hidden="true">&#128247;</span> Compartir formulario público
+                <span class="chev" aria-hidden="true">&#9660;</span>
+            </summary>
+            <div class="qr-body">
+                <div class="qr-container" id="qrcode">
+                    <p class="qr-hint">El código QR se genera al abrir esta sección.</p>
+                </div>
+                <p class="qr-hint">Este QR abre únicamente el formulario para los usuarios. Las secciones de administración no se muestran.</p>
+                <div class="share-buttons">
+                    <button type="button" class="share-btn whatsapp" id="btnWhatsApp">&#128172; WhatsApp</button>
+                    <button type="button" class="share-btn copy-link" id="btnCopiar">&#128203; Copiar enlace</button>
+                    <button type="button" class="share-btn" id="btnDescargarQR">&#11015; Descargar QR</button>
+                    <button type="button" class="share-btn qr-pdf" id="btnQRPDF">&#128196; QR en PDF</button>
+                </div>
+
+                <div class="url-config">
+                    <p class="config-title">Contacto para recibir solicitudes</p>
+                    <label for="contactoWhatsApp">WhatsApp (con indicativo, sin + ni espacios)</label>
+                    <input type="tel" id="contactoWhatsApp" inputmode="tel" maxlength="20" placeholder="573001234567">
+                    <label for="contactoEmail">Correo electrónico (opcional)</label>
+                    <input type="email" id="contactoEmail" maxlength="120" placeholder="laboratorio@uam.edu.co">
+                    <button type="button" class="btn btn-secondary" id="btnGuardarContacto">Guardar contacto</button>
+                    <p class="qr-hint">El contacto se incluye en el enlace público y el QR. Los usuarios lo usan para enviarte la solicitud.</p>
+                </div>
+
+                <div class="url-config">
+                    <label for="qrUrl">URL pública del formulario (sin parámetros)</label>
+                    <div class="url-config-row">
+                        <input type="url" id="qrUrl" inputmode="url" placeholder="https://tu-formulario.netlify.app">
+                        <button type="button" class="btn btn-primary" id="btnActualizarQR">Actualizar QR</button>
+                    </div>
+                    <p class="qr-warn" id="qrWarn" hidden>&#9888; El QR apunta a una URL local (file://). Publica el formulario y pega la URL pública aquí para que funcione en el celular.</p>
+                    <p class="qr-hint">El enlace y la URL se guardan únicamente en este navegador.</p>
+                    <p class="admin-note">Acceso administrador por PIN. Este control es una barrera de interfaz; para seguridad real se necesita un servidor.</p>
+                    <button type="button" class="btn btn-secondary" id="btnChangePin">Cambiar PIN de este navegador</button>
+                </div>
+            </div>
+        </details>
+
+        <section class="card records-section admin-only" id="recordsSection">
+            <div class="print-title">Registros de préstamo de laboratorio, equipos y/o elementos</div>
+            <div class="print-sub" id="printSub"></div>
+
+            <div class="records-head">
+                <h3>&#128221; Registros capturados <span class="records-count" id="recordsCount">0</span></h3>
+                <div class="records-tools">
+                    <input type="search" id="buscar" placeholder="Buscar solicitante, equipo, programa…" aria-label="Buscar registros">
+                    <select id="filtroEstado" aria-label="Filtrar por estado">
+                        <option value="todos">Todos</option>
+                        <option value="pendientes">Pendientes</option>
+                        <option value="devueltos">Devueltos</option>
+                    </select>
+                </div>
+            </div>
+
+            <p class="records-note">
+                <span aria-hidden="true">&#8505;&#65039;</span>
+                <span>Los registros se guardan únicamente en este navegador. Las solicitudes del formulario público llegan por WhatsApp o correo; regístralas aquí. Descarga un respaldo con frecuencia.</span>
+            </p>
+
+            <div id="recordsContent"></div>
+
+            <div class="records-cards" id="recordsCards" hidden></div>
+
+            <div class="records-table" id="recordsTable" hidden>
+                <table>
+                    <colgroup>
+                        <col style="width: 38px">
+                        <col style="width: 92px">
+                        <col>
+                        <col>
+                        <col style="width: 48px">
+                        <col style="width: 100px">
+                        <col style="width: 208px">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Préstamo</th>
+                            <th>Solicitante</th>
+                            <th>Equipo / elemento</th>
+                            <th>Cant.</th>
+                            <th>Estado</th>
+                            <th class="col-actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsBody"></tbody>
+                </table>
+            </div>
+
+            <div class="records-actions">
+                <button type="button" class="btn btn-mini btn-mini-danger" id="btnBorrarTodo">&#128465; Borrar todo</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn btn-secondary" id="btnCSV">&#128196; CSV</button>
+                <button type="button" class="btn btn-warning" id="btnExcel">&#128202; Excel</button>
+                <button type="button" class="btn btn-secondary" id="btnJSON">&#128190; Respaldo</button>
+                <button type="button" class="btn btn-secondary" id="btnImport">&#8617; Restaurar</button>
+                <button type="button" class="btn btn-secondary" id="btnPrint">&#128424; Imprimir</button>
+                <input type="file" id="fileImport" accept="application/json,.json" hidden>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Control de Préstamo de Laboratorio, Equipos y/o Elementos &middot; Código: GAF-FOR-127</p>
+    </footer>
+
+    <div class="modal-overlay" id="adminModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+            <h2 id="adminModalTitle">Acceso administrador</h2>
+            <p>Ingresa el PIN para ver los registros y compartir el formulario.</p>
+            <input type="password" id="adminPin" inputmode="text" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40" placeholder="PIN de administrador" aria-label="PIN de administrador">
+            <p class="modal-error" id="adminPinError" hidden>PIN incorrecto. Inténtalo de nuevo.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="btnAdminCancel">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnAdminEnter">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="sendModal" hidden>
+        <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+            <h2 id="sendTitle">Solicitud lista para enviar</h2>
+            <p>Revisa los datos y envíalos al laboratorio. El registro se confirmará cuando el laboratorio lo reciba.</p>
+            <pre class="send-summary" id="sendSummary"></pre>
+            <p class="modal-error" id="sendNoContact" hidden>El laboratorio aún no configuró un contacto. Copia o descarga la solicitud y envíala por el medio que te indiquen.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-success" id="btnSendWhatsApp">&#128172; WhatsApp</button>
+                <button type="button" class="btn btn-secondary" id="btnSendEmail">&#9993; Correo</button>
+                <button type="button" class="btn btn-secondary" id="btnCopyRequest">&#128203; Copiar</button>
+                <button type="button" class="btn btn-secondary" id="btnDownloadRequest">&#128190; Descargar</button>
+                <button type="button" class="btn btn-primary" id="btnCloseSend">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // ==================== Configuración ====================
+            var STORAGE_KEY = 'prestamos_lab';
+            var THEME_KEY = 'prestamos_theme';
+            var EXCELJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+            var QRCODE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+            var JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+
+            var ADMIN_SESSION_KEY = 'prestamos_admin_session';
+            var ADMIN_PIN_KEY = 'prestamos_admin_pin';
+            var CONTACT_KEY = 'prestamos_contacto';
+            // PIN de acceso administrador. Puedes cambiarlo aquí.
+            var DEFAULT_ADMIN_PIN = 'tomy';
+
+            var isAdmin = false;
+            var pendingRequestText = '';
+            var requestSent = false;
+
+        var LOGO_B64 = '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';
+
+            var LOADING_FLAG = false;
+            var state = {
+                records: [],
+                editingId: null,
+                query: '',
+                filter: 'todos',
+                dirty: false
+            };
+
+            // ==================== Utilidades ====================
+            function $(selector, root) { return (root || document).querySelector(selector); }
+            function $$(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function normalizeText(value) {
+                return String(value == null ? '' : value)
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+            function todayISO() {
+                var d = new Date();
+                return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+            }
+
+            function nowTime() {
+                var d = new Date();
+                return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+            }
+
+            function fileStamp() { return todayISO().replace(/-/g, ''); }
+
+            function formatDate(iso) {
+                if (!iso) return '—';
+                var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+                return m ? m[3] + '/' + m[2] + '/' + m[1] : iso;
+            }
+
+            function uid() {
+                try {
+                    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                        return window.crypto.randomUUID();
+                    }
+                } catch (e) { /* contexto no seguro */ }
+                return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+            }
+
+            var scriptCache = {};
+            function ensureScript(src) {
+                if (scriptCache[src]) return scriptCache[src];
+                scriptCache[src] = new Promise(function (resolve, reject) {
+                    var s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    s.onload = function () { resolve(); };
+                    s.onerror = function () {
+                        scriptCache[src] = null;
+                        reject(new Error('No se pudo cargar ' + src));
+                    };
+                    document.head.appendChild(s);
+                });
+                return scriptCache[src];
+            }
+
+            function downloadBlob(blob, filename) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+            }
+
+            var toastTimer = null;
+            function showToast(msg, type) {
+                var t = $('#toast');
+                if (!t) return;
+                t.textContent = msg;
+                t.className = 'toast show' + (type ? ' toast-' + type : '');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3200);
+            }
+
+            // ==================== Modo público / administrador ====================
+            function getParams() {
+                try { return new URLSearchParams(window.location.search); }
+                catch (e) { return null; }
+            }
+
+            function detectAdminMode() {
+                var params = getParams();
+                if (params && params.get('publico') === '1') return false;
+                try { return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }
+                catch (e) { return false; }
+            }
+
+            function applyMode() {
+                document.body.classList.toggle('modo-publico', !isAdmin);
+
+                $$('.admin-only').forEach(function (el) { el.hidden = !isAdmin; });
+
+                var hint = $('#publicHint');
+                if (hint) hint.hidden = isAdmin;
+
+                var submit = $('#btnSubmit');
+                if (submit) submit.innerHTML = isAdmin ? '&#10003; Registrar préstamo' : '&#128228; Enviar solicitud';
+
+                var access = $('#btnAdminAccess');
+                if (access) {
+                    access.innerHTML = isAdmin
+                        ? '&#128275; <span class="admin-access-text">Cerrar sesión</span><span class="admin-access-short">Salir</span>'
+                        : '&#128274; <span class="admin-access-text">Administrador</span><span class="admin-access-short">Admin</span>';
+                    access.classList.toggle('is-admin', isAdmin);
+                    access.setAttribute('aria-label', isAdmin ? 'Cerrar sesión de administrador' : 'Acceso administrador');
+                    access.title = access.getAttribute('aria-label');
+                }
+
+                if (!isAdmin) {
+                    state.editingId = null;
+                    state.dirty = false;
+                    var banner = $('#editBanner');
+                    if (banner) banner.hidden = true;
+                }
+            }
+
+            function getAdminPin() {
+                try { return localStorage.getItem(ADMIN_PIN_KEY) || DEFAULT_ADMIN_PIN; }
+                catch (e) { return DEFAULT_ADMIN_PIN; }
+            }
+
+            function openAdminModal() {
+                $('#adminPin').value = '';
+                $('#adminPinError').hidden = true;
+                $('#adminModal').hidden = false;
+                setTimeout(function () { $('#adminPin').focus(); }, 40);
+            }
+
+            function closeAdminModal() {
+                $('#adminModal').hidden = true;
+            }
+
+            function tryAdminLogin() {
+                var pin = $('#adminPin').value;
+                if (pin !== getAdminPin()) {
+                    $('#adminPinError').hidden = false;
+                    $('#adminPin').select();
+                    return;
+                }
+
+                try { sessionStorage.setItem(ADMIN_SESSION_KEY, '1'); } catch (e) { /* sin sesión */ }
+                isAdmin = true;
+                closeAdminModal();
+                loadRecords();
+                render();
+                applyMode();
+                showToast('Acceso administrador concedido', 'success');
+            }
+
+            function cambiarPinAdmin() {
+                var actual = prompt('PIN actual:');
+                if (actual === null) return;
+                if (actual !== getAdminPin()) {
+                    showToast('PIN actual incorrecto', 'error');
+                    return;
+                }
+
+                var nuevo = prompt('Nuevo PIN (mínimo 4 caracteres):');
+                if (nuevo === null) return;
+                nuevo = nuevo.trim();
+                if (nuevo.length < 4) {
+                    showToast('El PIN debe tener al menos 4 caracteres', 'error');
+                    return;
+                }
+
+                try { localStorage.setItem(ADMIN_PIN_KEY, nuevo); }
+                catch (e) { showToast('No se pudo guardar el PIN en este navegador', 'error'); return; }
+
+                showToast('PIN actualizado en este navegador', 'success');
+            }
+
+            function logoutAdmin() {
+                if (!confirm('¿Cerrar la sesión de administrador?')) return;
+                try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch (e) { /* sin sesión */ }
+                isAdmin = false;
+                state.records = [];
+                state.editingId = null;
+                render();
+                applyMode();
+                showToast('Sesión de administrador cerrada');
+            }
+
+            function normalizePhone(value) {
+                return String(value == null ? '' : value).replace(/[^\d]/g, '');
+            }
+
+            function getStoredContact() {
+                try {
+                    var saved = JSON.parse(localStorage.getItem(CONTACT_KEY) || '{}');
+                    return {
+                        wa: normalizePhone(saved.wa),
+                        em: String(saved.em || '').trim()
+                    };
+                } catch (e) {
+                    return { wa: '', em: '' };
+                }
+            }
+
+            function getPublicContact() {
+                var stored = getStoredContact();
+                var params = getParams();
+                var wa = params && params.get('w') ? params.get('w') : stored.wa;
+                var em = params && params.get('e') ? params.get('e') : stored.em;
+                return { wa: normalizePhone(wa), em: String(em || '').trim() };
+            }
+
+            // ==================== Datos ====================
+            function normalizeRecord(raw) {
+                var r = raw || {};
+                var tipo = r.tipoUsuario;
+                if (!tipo) {
+                    if (r.telInterno === 'Interno' || r.telInterno === 'Externo') tipo = r.telInterno;
+                    else if (r.telExterno === 'Externo') tipo = 'Externo';
+                }
+                return {
+                    id: (typeof r.id === 'string' && /^[\w-]{1,64}$/.test(r.id)) ? r.id : uid(),
+                    fechaPrestamo: r.fechaPrestamo || '',
+                    horaPrestamo: r.horaPrestamo || '',
+                    tipoUsuario: tipo === 'Externo' ? 'Externo' : (tipo === 'Interno' ? 'Interno' : ''),
+                    quienSolicita: r.quienSolicita || '',
+                    programa: r.programa || '',
+                    correo: r.correo || '',
+                    nombreEquipo: r.nombreEquipo || '',
+                    cantidad: Math.max(1, parseInt(r.cantidad, 10) || 1),
+                    obsPrestamo: r.obsPrestamo || '',
+                    fechaDevolucion: r.fechaDevolucion || '',
+                    horaDevolucion: r.horaDevolucion || '',
+                    estadoLimpieza: r.estadoLimpieza || '',
+                    obsDevolucion: r.obsDevolucion || '',
+                    createdAt: r.createdAt || r.timestamp || new Date().toISOString(),
+                    updatedAt: r.updatedAt || ''
+                };
+            }
+
+            function loadRecords() {
+                try {
+                    var raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                    if (!Array.isArray(raw)) raw = [];
+
+                    var needsMigration = raw.some(function (r) {
+                        return !r ||
+                            typeof r.id !== 'string' ||
+                            !/^[\w-]{1,64}$/.test(r.id) ||
+                            r.tipoUsuario === undefined ||
+                            typeof r.cantidad !== 'number' ||
+                            !r.createdAt;
+                    });
+
+                    state.records = raw.map(normalizeRecord);
+
+                    // Guardar el formato normalizado para que los IDs sean estables entre sesiones.
+                    if (needsMigration && state.records.length) {
+                        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records)); } catch (e) { /* sin persistencia */ }
+                    }
+                } catch (e) {
+                    state.records = [];
+                }
+            }
+
+            function persist() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+                    return true;
+                } catch (e) {
+                    showToast('No se pudieron guardar los datos (almacenamiento lleno).', 'error');
+                    return false;
+                }
+            }
+
+            function findRecord(id) {
+                for (var i = 0; i < state.records.length; i++) {
+                    if (state.records[i].id === id) return state.records[i];
+                }
+                return null;
+            }
+
+            function isReturned(record) { return !!record.fechaDevolucion; }
+
+            // ==================== Render ====================
+            function matchesFilters(record) {
+                if (state.filter === 'pendientes' && isReturned(record)) return false;
+                if (state.filter === 'devueltos' && !isReturned(record)) return false;
+
+                var q = normalizeText(state.query);
+                if (!q) return true;
+
+                var haystack = normalizeText([
+                    record.quienSolicita, record.programa, record.correo,
+                    record.nombreEquipo, record.obsPrestamo, record.obsDevolucion,
+                    record.estadoLimpieza, record.fechaPrestamo, record.horaPrestamo,
+                    record.tipoUsuario, record.cantidad
+                ].join(' '));
+                return haystack.indexOf(q) !== -1;
+            }
+
+            function emptyState(title, text) {
+                return '<div class="empty-state">' +
+                    '<div class="empty-icon" aria-hidden="true">&#128194;</div>' +
+                    '<p class="empty-title">' + escapeHtml(title) + '</p>' +
+                    '<p>' + escapeHtml(text) + '</p>' +
+                    '</div>';
+            }
+
+            function actionButtons(record, returned) {
+                return (returned ? '' :
+                        '<button type="button" class="btn btn-mini btn-ok" data-action="devolver" data-id="' + escapeHtml(record.id) + '" title="Registrar devolución con fecha y hora actuales">Devolver</button>') +
+                    '<button type="button" class="btn btn-mini" data-action="editar" data-id="' + escapeHtml(record.id) + '">Editar</button>' +
+                    '<button type="button" class="btn btn-mini btn-mini-danger" data-action="eliminar" data-id="' + escapeHtml(record.id) + '" aria-label="Eliminar registro de ' + escapeHtml(record.quienSolicita) + '">Eliminar</button>';
+            }
+
+            function rowHtml(record, index) {
+                var returned = isReturned(record);
+                var estado = returned ? 'Devuelto' : 'Pendiente';
+                var subEstado = [];
+                if (returned) subEstado.push('Dev. ' + formatDate(record.fechaDevolucion));
+                if (record.estadoLimpieza) subEstado.push(record.estadoLimpieza);
+
+                var contacto = [record.programa, record.correo].filter(Boolean).join(' · ');
+
+                return '<tr>' +
+                    '<td class="col-num">' + (index + 1) + '</td>' +
+                    '<td><div class="cell-strong">' + escapeHtml(formatDate(record.fechaPrestamo)) + '</div>' +
+                        '<div class="cell-sub">' + escapeHtml(record.horaPrestamo || '') + '</div></td>' +
+                    '<td><div class="cell-strong">' + escapeHtml(record.quienSolicita) + '</div>' +
+                        (contacto ? '<div class="cell-sub">' + escapeHtml(contacto) + '</div>' : '') + '</td>' +
+                    '<td><div class="cell-strong">' + escapeHtml(record.nombreEquipo) + '</div>' +
+                        (record.obsPrestamo ? '<div class="cell-sub">Obs.: ' + escapeHtml(record.obsPrestamo) + '</div>' : '') + '</td>' +
+                    '<td class="col-num">' + record.cantidad + '</td>' +
+                    '<td><span class="chip ' + (returned ? 'chip-ok' : 'chip-pending') + '">' + estado + '</span>' +
+                        (subEstado.length ? '<div class="cell-sub">' + escapeHtml(subEstado.join(' · ')) + '</div>' : '') + '</td>' +
+                    '<td class="col-actions">' + actionButtons(record, returned) + '</td>' +
+                    '</tr>';
+            }
+
+            function cardHtml(record, index) {
+                var returned = isReturned(record);
+                var estado = returned ? 'Devuelto' : 'Pendiente';
+                var contacto = [record.programa, record.correo].filter(Boolean).join(' · ');
+                var meta = [
+                    '&#128197; ' + escapeHtml(formatDate(record.fechaPrestamo)) + ' ' + escapeHtml(record.horaPrestamo || ''),
+                    'Cant. ' + record.cantidad
+                ];
+                if (record.tipoUsuario) meta.push(escapeHtml(record.tipoUsuario));
+                if (returned) meta.push('Dev. ' + escapeHtml(formatDate(record.fechaDevolucion)));
+                if (record.estadoLimpieza) meta.push(escapeHtml(record.estadoLimpieza));
+
+                return '<article class="record-card">' +
+                    '<div class="rc-top">' +
+                        '<span class="rc-num">#' + (index + 1) + '</span>' +
+                        '<span class="chip ' + (returned ? 'chip-ok' : 'chip-pending') + '">' + estado + '</span>' +
+                    '</div>' +
+                    '<h4 class="rc-title">' + escapeHtml(record.nombreEquipo) + '</h4>' +
+                    '<div class="rc-line"><strong>' + escapeHtml(record.quienSolicita) + '</strong>' +
+                        (contacto ? '<span class="rc-sub">' + escapeHtml(contacto) + '</span>' : '') + '</div>' +
+                    '<div class="rc-meta"><span>' + meta.join('</span><span>') + '</span></div>' +
+                    (record.obsPrestamo ? '<p class="rc-obs">Obs.: ' + escapeHtml(record.obsPrestamo) + '</p>' : '') +
+                    '<div class="rc-actions">' + actionButtons(record, returned) + '</div>' +
+                    '</article>';
+            }
+
+            function updateDatalists() {
+                var lists = [
+                    ['listaSolicitantes', 'quienSolicita'],
+                    ['listaProgramas', 'programa'],
+                    ['listaEquipos', 'nombreEquipo']
+                ];
+
+                lists.forEach(function (pair) {
+                    var el = document.getElementById(pair[0]);
+                    if (!el) return;
+                    var seen = {};
+                    state.records.forEach(function (r) {
+                        var value = (r[pair[1]] || '').trim();
+                        if (value) seen[value] = true;
+                    });
+                    el.innerHTML = Object.keys(seen)
+                        .sort(function (a, b) { return a.localeCompare(b, 'es'); })
+                        .map(function (value) { return '<option value="' + escapeHtml(value) + '"></option>'; })
+                        .join('');
+                });
+            }
+
+            function render() {
+                var total = state.records.length;
+                var devueltos = 0;
+                state.records.forEach(function (r) { if (isReturned(r)) devueltos++; });
+
+                updateDatalists();
+
+                $('#statTotal').textContent = total;
+                $('#statPendientes').textContent = total - devueltos;
+                $('#statDevueltos').textContent = devueltos;
+                $('#recordsCount').textContent = total;
+
+                ['btnCSV', 'btnExcel', 'btnJSON', 'btnPrint', 'btnBorrarTodo'].forEach(function (id) {
+                    var btn = document.getElementById(id);
+                    if (btn) btn.disabled = total === 0;
+                });
+
+                var filtered = state.records.filter(matchesFilters);
+                var content = $('#recordsContent');
+                var tableWrap = $('#recordsTable');
+                var cardsWrap = $('#recordsCards');
+                var body = $('#recordsBody');
+                var printSub = $('#printSub');
+                if (printSub) {
+                    printSub.textContent = 'Total de registros: ' + total +
+                        ' · Pendientes: ' + (total - devueltos) +
+                        ' · Devueltos: ' + devueltos +
+                        ' · Generado: ' + formatDate(todayISO()) + ' ' + nowTime();
+                }
+
+                if (total === 0) {
+                    content.innerHTML = emptyState('No hay registros aún', 'Registra el primer préstamo usando el formulario.');
+                    content.hidden = false;
+                    tableWrap.hidden = true;
+                    cardsWrap.hidden = true;
+                    return;
+                }
+
+                if (filtered.length === 0) {
+                    content.innerHTML = emptyState('Sin resultados', 'Prueba con otra búsqueda o cambia el filtro de estado.');
+                    content.hidden = false;
+                    tableWrap.hidden = true;
+                    cardsWrap.hidden = true;
+                    return;
+                }
+
+                content.hidden = true;
+                tableWrap.hidden = false;
+                cardsWrap.hidden = false;
+                body.innerHTML = filtered.map(rowHtml).join('');
+                cardsWrap.innerHTML = filtered.map(cardHtml).join('');
+            }
+
+            // ==================== Formulario ====================
+            function getField(id) { return document.getElementById(id); }
+
+            function errorElementFor(field) {
+                var describedBy = field.getAttribute('aria-describedby');
+                return describedBy ? document.getElementById(describedBy) : null;
+            }
+
+            function markError(field) {
+                field.classList.add('error');
+                field.setAttribute('aria-invalid', 'true');
+                var msg = errorElementFor(field);
+                if (msg) msg.classList.add('show');
+            }
+
+            function clearErrors() {
+                $$('.error').forEach(function (el) { el.classList.remove('error'); });
+                $$('.error-msg').forEach(function (el) { el.classList.remove('show'); });
+                $$('[aria-invalid="true"]').forEach(function (el) { el.setAttribute('aria-invalid', 'false'); });
+            }
+
+            function syncReturnDateMin() {
+                var fechaPrestamo = $('#fechaPrestamo').value;
+                var fechaDevolucion = $('#fechaDevolucion');
+                if (fechaPrestamo) fechaDevolucion.setAttribute('min', fechaPrestamo);
+                else fechaDevolucion.removeAttribute('min');
+            }
+
+            function prefillDefaults() {
+                if (!$('#fechaPrestamo').value) $('#fechaPrestamo').value = todayISO();
+                if (!$('#horaPrestamo').value) $('#horaPrestamo').value = nowTime();
+                syncReturnDateMin();
+            }
+
+            function setFormValues(record) {
+                LOADING_FLAG = true;
+                $('#fechaPrestamo').value = record.fechaPrestamo || '';
+                $('#horaPrestamo').value = record.horaPrestamo || '';
+                var radio = $('input[name="tipoUsuario"][value="' + record.tipoUsuario + '"]');
+                if (radio) radio.checked = true;
+                $('#quienSolicita').value = record.quienSolicita || '';
+                $('#programa').value = record.programa || '';
+                $('#correo').value = record.correo || '';
+                $('#nombreEquipo').value = record.nombreEquipo || '';
+                $('#cantidad').value = record.cantidad || 1;
+                $('#obsPrestamo').value = record.obsPrestamo || '';
+                $('#fechaDevolucion').value = record.fechaDevolucion || '';
+                $('#horaDevolucion').value = record.horaDevolucion || '';
+                $('#estadoLimpieza').value = record.estadoLimpieza || '';
+                $('#obsDevolucion').value = record.obsDevolucion || '';
+                syncReturnDateMin();
+                LOADING_FLAG = false;
+            }
+
+            function startEdit(id) {
+                var record = findRecord(id);
+                if (!record) return;
+
+                state.editingId = id;
+                setFormValues(record);
+                clearErrors();
+                $('#editBannerText').textContent = record.quienSolicita + ' — ' + record.nombreEquipo;
+                $('#editBanner').hidden = false;
+                $('#btnSubmit').innerHTML = '&#128190; Guardar cambios';
+
+                $('#prestamoForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(function () { $('#quienSolicita').focus(); }, 350);
+            }
+
+            function stopEdit(options) {
+                var opts = options || {};
+                state.editingId = null;
+                $('#editBanner').hidden = true;
+                $('#btnSubmit').innerHTML = '&#10003; Registrar préstamo';
+                if (opts.reset !== false) {
+                    $('#prestamoForm').reset();
+                    clearErrors();
+                    prefillDefaults();
+                    state.dirty = false;
+                }
+            }
+
+            function readForm() {
+                var checked = $('input[name="tipoUsuario"]:checked');
+                return {
+                    fechaPrestamo: $('#fechaPrestamo').value,
+                    horaPrestamo: $('#horaPrestamo').value,
+                    tipoUsuario: checked ? checked.value : '',
+                    quienSolicita: $('#quienSolicita').value.trim(),
+                    programa: $('#programa').value.trim(),
+                    correo: $('#correo').value.trim(),
+                    nombreEquipo: $('#nombreEquipo').value.trim(),
+                    cantidad: parseInt($('#cantidad').value, 10) || 0,
+                    obsPrestamo: $('#obsPrestamo').value.trim(),
+                    fechaDevolucion: $('#fechaDevolucion').value,
+                    horaDevolucion: $('#horaDevolucion').value,
+                    estadoLimpieza: $('#estadoLimpieza').value,
+                    obsDevolucion: $('#obsDevolucion').value.trim()
+                };
+            }
+
+            function validateForm() {
+                clearErrors();
+
+                var ok = true;
+                var firstInvalid = null;
+                var required = ['fechaPrestamo', 'horaPrestamo', 'quienSolicita', 'programa', 'correo', 'nombreEquipo', 'cantidad'];
+
+                required.forEach(function (id) {
+                    var field = getField(id);
+                    var value = (field.value || '').trim();
+                    var invalid = value === '';
+
+                    if (field.type === 'number') {
+                        var n = parseInt(field.value, 10);
+                        invalid = isNaN(n) || n < 1 || n > 9999;
+                    }
+
+                    if (invalid) {
+                        markError(field);
+                        ok = false;
+                        if (!firstInvalid) firstInvalid = field;
+                    }
+                });
+
+                var correo = $('#correo');
+                if (correo.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.value.trim())) {
+                    markError(correo);
+                    ok = false;
+                    if (!firstInvalid) firstInvalid = correo;
+                }
+
+                var radioChecked = $('input[name="tipoUsuario"]:checked');
+                if (!radioChecked) {
+                    var group = $('#radioTipoUsuario');
+                    group.classList.add('error');
+                    $('#errTipoUsuario').classList.add('show');
+                    $$('input[name="tipoUsuario"]').forEach(function (r) { r.setAttribute('aria-invalid', 'true'); });
+                    ok = false;
+                    if (!firstInvalid) firstInvalid = group.querySelector('input');
+                }
+
+                var fp = $('#fechaPrestamo').value;
+                var fd = $('#fechaDevolucion').value;
+                if (fp && fd && fd < fp) {
+                    markError($('#fechaDevolucion'));
+                    ok = false;
+                    if (!firstInvalid) firstInvalid = $('#fechaDevolucion');
+                }
+
+                if (firstInvalid && typeof firstInvalid.focus === 'function') {
+                    firstInvalid.focus({ preventScroll: true });
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                return ok;
+            }
+
+            // ==================== Acciones de registros ====================
+            function registrarDevolucion(id) {
+                var record = findRecord(id);
+                if (!record) return;
+
+                if (isReturned(record) && !confirm('Este registro ya tiene una devolución registrada. ¿Actualizarla con la fecha y hora actuales?')) {
+                    return;
+                }
+
+                record.fechaDevolucion = todayISO();
+                record.horaDevolucion = nowTime();
+                record.updatedAt = new Date().toISOString();
+                persist();
+                render();
+                showToast('Devolución registrada para ' + record.nombreEquipo, 'success');
+            }
+
+            function eliminarRegistro(id) {
+                var record = findRecord(id);
+                if (!record) return;
+                if (!confirm('¿Eliminar el registro de "' + record.quienSolicita + '" — ' + record.nombreEquipo + '?')) return;
+
+                state.records = state.records.filter(function (r) { return r.id !== id; });
+                if (state.editingId === id) stopEdit({ reset: true });
+                persist();
+                render();
+                showToast('Registro eliminado');
+            }
+
+            function limpiarRegistros() {
+                if (state.records.length === 0) { showToast('No hay registros para borrar'); return; }
+                if (!confirm('¿Borrar los ' + state.records.length + ' registros? Esta acción no se puede deshacer.\n\nSugerencia: descarga un respaldo JSON antes de continuar.')) return;
+
+                state.records = [];
+                stopEdit({ reset: true });
+                persist();
+                render();
+                showToast('Todos los registros fueron eliminados');
+            }
+
+            // ==================== Exportaciones ====================
+            function csvCell(value) {
+                var s = value == null ? '' : String(value);
+                if (/[";\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+                return s;
+            }
+
+            function exportarCSV() {
+                if (state.records.length === 0) { showToast('No hay registros para exportar', 'error'); return; }
+
+                var headers = [
+                    'No.', 'Fecha para préstamo (d/m/a)', 'Hora para préstamo', 'Interno', 'Externo',
+                    'Quien solicita (Nombre, cargo)', 'Programa y/o dependencia', 'Correo electrónico',
+                    'Nombre de laboratorio, equipo y/o elemento', 'Cantidad',
+                    'Observaciones préstamo', 'Fecha devolución (d/m/a)', 'Hora de devolución',
+                    'Estado y limpieza', 'Observaciones devolución', 'Fecha de registro'
+                ];
+
+                var lines = [headers.map(csvCell).join(';')];
+                state.records.forEach(function (r, i) {
+                    lines.push([
+                        i + 1, r.fechaPrestamo, r.horaPrestamo,
+                        r.tipoUsuario === 'Interno' ? 'Interno' : '',
+                        r.tipoUsuario === 'Externo' ? 'Externo' : '',
+                        r.quienSolicita, r.programa, r.correo, r.nombreEquipo, r.cantidad,
+                        r.obsPrestamo, r.fechaDevolucion, r.horaDevolucion,
+                        r.estadoLimpieza, r.obsDevolucion, r.createdAt
+                    ].map(csvCell).join(';'));
+                });
+
+                var csv = '\uFEFF' + lines.join('\r\n');
+                downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'prestamos_lab_' + fileStamp() + '.csv');
+                showToast('CSV exportado correctamente', 'success');
+            }
+
+            function exportarJSON() {
+                if (state.records.length === 0) { showToast('No hay registros para respaldar', 'error'); return; }
+                var data = {
+                    app: 'control-prestamo-laboratorio',
+                    version: 2,
+                    exportedAt: new Date().toISOString(),
+                    records: state.records
+                };
+                downloadBlob(
+                    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' }),
+                    'respaldo_prestamos_' + fileStamp() + '.json'
+                );
+                showToast('Respaldo JSON descargado', 'success');
+            }
+
+            function importarJSON(file) {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    try {
+                        var parsed = JSON.parse(String(reader.result));
+                        var incoming = Array.isArray(parsed) ? parsed : parsed.records;
+                        if (!Array.isArray(incoming)) throw new Error('El archivo no tiene una lista de registros.');
+
+                        var normalized = incoming.map(normalizeRecord).filter(function (r) {
+                            return r.quienSolicita || r.nombreEquipo || r.fechaPrestamo;
+                        });
+                        if (normalized.length === 0) throw new Error('El archivo no contiene registros válidos.');
+
+                        var mode = 'replace';
+                        if (state.records.length > 0) {
+                            mode = confirm(
+                                'Se encontraron ' + normalized.length + ' registros en el archivo.\n\n' +
+                                'Aceptar = REEMPLAZAR los registros actuales.\n' +
+                                'Cancelar = COMBINAR con los actuales (sin duplicar).'
+                            ) ? 'replace' : 'merge';
+                        }
+
+                        if (mode === 'replace') {
+                            state.records = normalized;
+                        } else {
+                            var ids = {};
+                            state.records.forEach(function (r) { ids[r.id] = true; });
+                            normalized.forEach(function (r) {
+                                if (!ids[r.id]) { state.records.push(r); ids[r.id] = true; }
+                            });
+                        }
+
+                        persist();
+                        render();
+                        showToast('Respaldo restaurado: ' + normalized.length + ' registro(s)', 'success');
+                    } catch (err) {
+                        showToast('Archivo inválido: ' + err.message, 'error');
+                    }
+                };
+                reader.onerror = function () { showToast('No se pudo leer el archivo', 'error'); };
+                reader.readAsText(file);
+            }
+
+            async function exportarExcel() {
+                if (state.records.length === 0) { showToast('No hay registros para exportar', 'error'); return; }
+
+                var btn = $('#btnExcel');
+                var originalLabel = btn.innerHTML;
+                btn.disabled = true;
+                btn.textContent = 'Generando…';
+
+                try {
+                    await ensureScript(EXCELJS_URL);
+                    if (typeof ExcelJS === 'undefined') throw new Error('ExcelJS no disponible');
+
+                    var wb = new ExcelJS.Workbook();
+                    wb.creator = 'Control de Préstamo de Laboratorio';
+                    wb.created = new Date();
+
+                    var ws = wb.addWorksheet('Hoja1', {
+                        pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 },
+                        views: [{ state: 'frozen', ySplit: 7 }]
+                    });
+
+                    // === Anchos de columna ===
+                    ws.getColumn(1).width = 1.11;
+                    ws.getColumn(2).width = 4.67;
+                    ws.getColumn(3).width = 18.78;
+                    ws.getColumn(4).width = 11.67;
+                    ws.getColumn(5).width = 4.22;
+                    ws.getColumn(6).width = 4.44;
+                    ws.getColumn(7).width = 27.22;
+                    ws.getColumn(8).width = 27.33;
+                    ws.getColumn(9).width = 32.11;
+                    ws.getColumn(10).width = 30.11;
+                    ws.getColumn(11).width = 10.11;
+                    ws.getColumn(12).width = 27.0;
+                    ws.getColumn(13).width = 12.33;
+                    ws.getColumn(14).width = 11.67;
+                    ws.getColumn(15).width = 26.44;
+                    ws.getColumn(16).width = 26.11;
+
+                    // === Altos de fila ===
+                    ws.getRow(1).height = 3;
+                    ws.getRow(2).height = 25.5;
+                    ws.getRow(3).height = 25.5;
+                    ws.getRow(4).height = 30;
+                    ws.getRow(5).height = 48.75;
+                    ws.getRow(6).height = 25.5;
+                    ws.getRow(7).height = 16.5;
+
+                    // === Colores ===
+                    var fillPink = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2DBDB' } };
+                    var fillPurple = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5DFEC' } };
+                    var fillOrange = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDE9D9' } };
+                    var fillBlue = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDAEEF3' } };
+
+                    // === Logo ===
+                    try {
+                        var logoId = wb.addImage({ base64: LOGO_B64, extension: 'png' });
+                        ws.addImage(logoId, {
+                            tl: { col: 0, row: 0 },
+                            br: { col: 3, row: 4 }
+                        });
+                    } catch (e) {
+                        console.warn('No se pudo insertar el logo:', e);
+                    }
+
+                    // === Título ===
+                    ws.mergeCells('B2:C4');
+                    ws.mergeCells('D2:N4');
+                    ws.mergeCells('O2:P2');
+                    ws.mergeCells('O3:P3');
+                    ws.mergeCells('O4:P4');
+
+                    var titleCell = ws.getCell('D2');
+                    titleCell.value = 'CONTROL PRÉSTAMO DE LABORATORIO, EQUIPOS Y/O ELEMENTOS';
+                    titleCell.font = { bold: true, size: 14 };
+                    titleCell.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+
+                    var metaFont = { bold: true, size: 11 };
+                    var metaAlign = { horizontal: 'left', vertical: 'center', wrapText: true };
+
+                    var o2 = ws.getCell('O2');
+                    o2.value = 'CÓDIGO: GAF-FOR-127';
+                    o2.font = metaFont;
+                    o2.alignment = metaAlign;
+
+                    var o3 = ws.getCell('O3');
+                    o3.value = 'VERSIÓN: 1';
+                    o3.font = metaFont;
+                    o3.alignment = metaAlign;
+
+                    var o4 = ws.getCell('O4');
+                    o4.value = 'FECHA ELABORACIÓN DEL DOCUMENTO: 09/JUL/2018';
+                    o4.font = metaFont;
+                    o4.alignment = metaAlign;
+
+                    // === Encabezados de sección (fila 5) ===
+                    ws.mergeCells('B5:B7');
+                    var b5 = ws.getCell('B5');
+                    b5.value = 'No.';
+                    b5.font = { bold: true, size: 12 };
+                    b5.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                    b5.fill = fillPink;
+                    b5.border = {
+                        top: { style: 'medium' }, bottom: { style: 'medium' },
+                        left: { style: 'medium' }, right: { style: 'medium' }
+                    };
+
+                    ws.mergeCells('C5:K5');
+                    var c5 = ws.getCell('C5');
+                    c5.value = 'Solicitud de reserva';
+                    c5.font = { bold: true, size: 12 };
+                    c5.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                    c5.fill = fillPurple;
+                    c5.border = {
+                        top: { style: 'medium' }, bottom: { style: 'medium' },
+                        left: { style: 'thin' }, right: { style: 'thin' }
+                    };
+
+                    // L5: encabezado de sección (sin fusionar con las subcabeceras)
+                    var l5 = ws.getCell('L5');
+                    l5.value = 'Préstamo de laboratorio, equipo y/o elemento';
+                    l5.font = { bold: true, size: 12 };
+                    l5.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                    l5.fill = fillOrange;
+                    l5.border = {
+                        top: { style: 'medium' }, bottom: { style: 'medium' },
+                        left: { style: 'medium' }, right: { style: 'thin' }
+                    };
+
+                    ws.mergeCells('M5:P5');
+                    var m5 = ws.getCell('M5');
+                    m5.value = 'Devolución del laboratorio, equipo y/o elemento';
+                    m5.font = { bold: true, size: 12 };
+                    m5.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                    m5.fill = fillBlue;
+                    m5.border = {
+                        top: { style: 'medium' }, bottom: { style: 'medium' },
+                        left: { style: 'medium' }, right: { style: 'medium' }
+                    };
+
+                    // === Subcabeceras (filas 6-7) ===
+                    var subHeaders = [
+                        { col: 3, val: 'Fecha para préstamo\n(d/m/a)', fill: fillPurple },
+                        { col: 4, val: 'Hora para préstamo', fill: fillPurple },
+                        { col: 5, val: 'Int.', fill: fillPurple },
+                        { col: 6, val: 'Ext.', fill: fillPurple },
+                        { col: 7, val: 'Quien solicita\n(Nombre, cargo)', fill: fillPurple },
+                        { col: 8, val: 'Programa y/o dependencia', fill: fillPurple },
+                        { col: 9, val: 'Correo electrónico', fill: fillPurple },
+                        { col: 10, val: 'Nombre de laboratorio, equipo y/o elemento', fill: fillPurple },
+                        { col: 11, val: 'Cantidad', fill: fillPurple },
+                        { col: 12, val: 'Firma de solicitante', fill: fillOrange },
+                        { col: 13, val: 'Fecha\n(d/m/a)', fill: fillBlue },
+                        { col: 14, val: 'Hora de devolución', fill: fillBlue },
+                        { col: 15, val: 'Estado y limpieza', fill: fillBlue },
+                        { col: 16, val: 'Firma (Responsable de laboratorio)', fill: fillBlue }
+                    ];
+
+                    subHeaders.forEach(function (sh) {
+                        var cell = ws.getRow(6).getCell(sh.col);
+                        cell.value = sh.val;
+                        cell.font = { bold: false, size: 12 };
+                        cell.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                        cell.fill = sh.fill;
+                        cell.border = {
+                            top: { style: 'thin' }, bottom: { style: 'medium' },
+                            left: { style: 'thin' }, right: { style: 'thin' }
+                        };
+                    });
+
+                    // Fusionar subcabeceras verticalmente (filas 6-7)
+                    ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].forEach(function (letter) {
+                        ws.mergeCells(letter + '6:' + letter + '7');
+                    });
+
+                    // === Filas de datos ===
+                    var thinBorder = {
+                        top: { style: 'thin' }, bottom: { style: 'thin' },
+                        left: { style: 'thin' }, right: { style: 'thin' }
+                    };
+
+                    state.records.forEach(function (r, i) {
+                        var rowNum = 8 + i;
+                        ws.getRow(rowNum).height = 69.75;
+
+                        var data = [
+                            i + 1,
+                            r.fechaPrestamo,
+                            r.horaPrestamo,
+                            r.tipoUsuario === 'Interno' ? 'Interno' : '',
+                            r.tipoUsuario === 'Externo' ? 'Externo' : '',
+                            r.quienSolicita,
+                            r.programa,
+                            r.correo,
+                            r.nombreEquipo,
+                            r.cantidad,
+                            '',
+                            r.fechaDevolucion,
+                            r.horaDevolucion,
+                            r.estadoLimpieza,
+                            ''
+                        ];
+
+                        data.forEach(function (value, ci) {
+                            var cell = ws.getRow(rowNum).getCell(ci + 2);
+                            cell.value = value;
+                            cell.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                            cell.border = thinBorder;
+                            cell.font = { size: 11 };
+                        });
+                    });
+
+                    // === Hoja de observaciones (información que no cabe en el formato oficial) ===
+                    var ws2 = wb.addWorksheet('Observaciones');
+                    ws2.columns = [
+                        { header: 'No.', key: 'no', width: 6 },
+                        { header: 'Equipo / elemento', key: 'equipo', width: 32 },
+                        { header: 'Solicitante', key: 'solicitante', width: 28 },
+                        { header: 'Observaciones del préstamo', key: 'obsPrestamo', width: 48 },
+                        { header: 'Observaciones de la devolución', key: 'obsDevolucion', width: 48 },
+                        { header: 'Fecha de registro', key: 'createdAt', width: 22 }
+                    ];
+
+                    ws2.getRow(1).font = { bold: true };
+                    ws2.getRow(1).fill = fillPurple;
+                    ws2.getRow(1).alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                    ws2.views = [{ state: 'frozen', ySplit: 1 }];
+
+                    state.records.forEach(function (r, i) {
+                        ws2.addRow({
+                            no: i + 1,
+                            equipo: r.nombreEquipo,
+                            solicitante: r.quienSolicita,
+                            obsPrestamo: r.obsPrestamo,
+                            obsDevolucion: r.obsDevolucion,
+                            createdAt: r.createdAt
+                        });
+                    });
+
+                    ws2.eachRow(function (row) {
+                        row.alignment = { vertical: 'top', wrapText: true };
+                    });
+
+                    var buffer = await wb.xlsx.writeBuffer();
+                    downloadBlob(
+                        new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+                        'Control_Prestamo_Laboratorio_' + fileStamp() + '.xlsx'
+                    );
+                    showToast('Archivo Excel exportado correctamente', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('No se pudo generar el Excel. Verifica tu conexión o usa el CSV.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalLabel;
+                }
+            }
+
+            // ==================== Compartir / QR ====================
+            var qrInstance = null;
+            var qrGeneratedFor = null;
+
+            function getSavedShareUrl() {
+                try {
+                    var saved = localStorage.getItem('prestamos_qr_url');
+                    if (saved && /^https?:\/\//i.test(saved)) return saved;
+                } catch (e) { /* almacenamiento no disponible */ }
+                return '';
+            }
+
+            function getBaseShareUrl() {
+                return getSavedShareUrl() || window.location.href;
+            }
+
+            function cleanBaseUrl(url) {
+                try {
+                    var u = new URL(url, window.location.href);
+                    ['publico', 'w', 'e'].forEach(function (key) { u.searchParams.delete(key); });
+                    return u.href;
+                } catch (e) {
+                    return url;
+                }
+            }
+
+            function buildPublicUrl(base) {
+                var raw = String(base || '').trim() || window.location.href;
+                try {
+                    var u = new URL(raw, window.location.href);
+                    u.searchParams.set('publico', '1');
+
+                    var contact = getStoredContact();
+                    if (contact.wa) u.searchParams.set('w', contact.wa);
+                    else u.searchParams.delete('w');
+
+                    if (contact.em) u.searchParams.set('e', contact.em);
+                    else u.searchParams.delete('e');
+
+                    return u.href;
+                } catch (e) {
+                    var sep = raw.indexOf('?') === -1 ? '?' : '&';
+                    return raw + sep + 'publico=1';
+                }
+            }
+
+            function getShareUrl() {
+                return buildPublicUrl(getBaseShareUrl());
+            }
+
+            async function generarQR(url) {
+                var container = $('#qrcode');
+                if (!container) return false;
+                container.innerHTML = '<p class="qr-hint">Generando código QR…</p>';
+
+                var ok = false;
+                try {
+                    if (typeof QRCode === 'undefined') await ensureScript(QRCODE_URL);
+                    if (typeof QRCode === 'undefined') throw new Error('QRCode no disponible');
+
+                    container.innerHTML = '';
+                    qrInstance = new QRCode(container, {
+                        text: url,
+                        width: 160,
+                        height: 160,
+                        colorDark: '#202124',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    qrGeneratedFor = url;
+                    ok = true;
+                } catch (e) {
+                    container.innerHTML = '<p class="qr-fallback">No se pudo cargar el generador de QR.<br>Revisa tu conexión a internet.</p>';
+                }
+
+                var warn = $('#qrWarn');
+                if (warn) warn.hidden = !/^file:/i.test(url);
+                return ok;
+            }
+
+            async function actualizarQR() {
+                var input = $('#qrUrl');
+                var base = input.value.trim();
+                if (!base) { showToast('Escribe una URL válida', 'error'); input.focus(); return; }
+                if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+
+                try { new URL(base); }
+                catch (e) { showToast('La URL no es válida', 'error'); input.focus(); return; }
+
+                base = cleanBaseUrl(base);
+
+                try { localStorage.setItem('prestamos_qr_url', base); }
+                catch (e) { showToast('No se pudo guardar la URL en este navegador', 'error'); }
+
+                input.value = base;
+                var publicUrl = buildPublicUrl(base);
+                var ok = await generarQR(publicUrl);
+                showToast(ok ? 'QR público actualizado' : 'No se pudo generar el QR. Revisa tu conexión.', ok ? 'success' : 'error');
+            }
+
+            function guardarContacto() {
+                var wa = normalizePhone($('#contactoWhatsApp').value);
+                var em = $('#contactoEmail').value.trim();
+
+                if (wa && wa.length < 7) {
+                    showToast('Revisa el WhatsApp: incluye el indicativo del país.', 'error');
+                    $('#contactoWhatsApp').focus();
+                    return;
+                }
+
+                if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+                    showToast('El correo no es válido.', 'error');
+                    $('#contactoEmail').focus();
+                    return;
+                }
+
+                try {
+                    localStorage.setItem(CONTACT_KEY, JSON.stringify({ wa: wa, em: em }));
+                } catch (e) {
+                    showToast('No se pudo guardar el contacto en este navegador.', 'error');
+                    return;
+                }
+
+                $('#contactoWhatsApp').value = wa;
+                $('#contactoEmail').value = em;
+
+                if ($('#qrDetails').open) {
+                    generarQR(buildPublicUrl(getBaseShareUrl()));
+                }
+
+                showToast('Contacto guardado. El enlace público usará estos datos.', 'success');
+            }
+
+            function copiarAlPortapapeles(text) {
+                function fallback() {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    var ok = false;
+                    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                    document.body.removeChild(ta);
+                    showToast(ok ? 'Copiado al portapapeles' : 'No se pudo copiar', ok ? 'success' : 'error');
+                }
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(function () {
+                        showToast('Copiado al portapapeles', 'success');
+                    }).catch(fallback);
+                } else {
+                    fallback();
+                }
+            }
+
+            function compartirWhatsApp() {
+                var url = getShareUrl();
+                if (!/^https?:\/\//i.test(url)) {
+                    showToast('Configura la URL pública en la sección Compartir para enviar el formulario.', 'error');
+                    return;
+                }
+                var text = encodeURIComponent('Formulario de Préstamo de Laboratorio. Ábrelo aquí: ' + url);
+                window.open('https://wa.me/?text=' + text, '_blank', 'noopener');
+            }
+
+            function copiarEnlace() {
+                var url = getShareUrl();
+                if (!/^https?:\/\//i.test(url)) {
+                    showToast('Configura la URL pública del formulario para copiar el enlace.', 'error');
+                    return;
+                }
+                copiarAlPortapapeles(url);
+            }
+
+            // ==================== Solicitud pública ====================
+            function buildRequestText(data) {
+                var lines = [];
+                lines.push('SOLICITUD DE PRÉSTAMO DE LABORATORIO, EQUIPOS Y/O ELEMENTOS');
+                lines.push('Código: GAF-FOR-127');
+                lines.push('');
+                lines.push('Fecha de préstamo: ' + formatDate(data.fechaPrestamo) + ' ' + data.horaPrestamo);
+                lines.push('Tipo de usuario: ' + (data.tipoUsuario || '—'));
+                lines.push('Solicitante: ' + data.quienSolicita);
+                lines.push('Programa y/o dependencia: ' + data.programa);
+                lines.push('Correo electrónico: ' + data.correo);
+                lines.push('Laboratorio, equipo y/o elemento: ' + data.nombreEquipo);
+                lines.push('Cantidad: ' + data.cantidad);
+
+                if (data.obsPrestamo) {
+                    lines.push('Observaciones del préstamo: ' + data.obsPrestamo);
+                }
+
+                if (data.fechaDevolucion || data.horaDevolucion || data.estadoLimpieza || data.obsDevolucion) {
+                    lines.push('');
+                    lines.push('DEVOLUCIÓN');
+                    if (data.fechaDevolucion) lines.push('Fecha: ' + formatDate(data.fechaDevolucion));
+                    if (data.horaDevolucion) lines.push('Hora: ' + data.horaDevolucion);
+                    if (data.estadoLimpieza) lines.push('Estado y limpieza: ' + data.estadoLimpieza);
+                    if (data.obsDevolucion) lines.push('Observaciones: ' + data.obsDevolucion);
+                }
+
+                lines.push('');
+                lines.push('Enviado desde el formulario web el ' + formatDate(todayISO()) + ' ' + nowTime() + '.');
+                return lines.join('\n');
+            }
+
+            function openSendModal(text) {
+                pendingRequestText = text;
+                requestSent = false;
+
+                $('#sendSummary').textContent = text;
+
+                var contact = getPublicContact();
+                $('#btnSendWhatsApp').hidden = !contact.wa;
+                $('#btnSendEmail').hidden = !contact.em;
+                $('#sendNoContact').hidden = !!(contact.wa || contact.em);
+                $('#sendModal').hidden = false;
+
+                var focusTarget = contact.wa ? $('#btnSendWhatsApp') : (contact.em ? $('#btnSendEmail') : $('#btnCopyRequest'));
+                setTimeout(function () { focusTarget.focus(); }, 40);
+            }
+
+            function closeSendModal() {
+                $('#sendModal').hidden = true;
+
+                if (requestSent) {
+                    requestSent = false;
+                    $('#prestamoForm').reset();
+                    clearErrors();
+                    prefillDefaults();
+                    state.dirty = false;
+                    showToast('Solicitud enviada. El laboratorio la registrará.', 'success');
+                }
+            }
+
+            function enviarSolicitudWhatsApp() {
+                var contact = getPublicContact();
+                if (!contact.wa) return;
+
+                window.open('https://wa.me/' + contact.wa + '?text=' + encodeURIComponent(pendingRequestText), '_blank', 'noopener');
+                requestSent = true;
+                showToast('Abriendo WhatsApp para enviar la solicitud…', 'success');
+            }
+
+            function enviarSolicitudCorreo() {
+                var contact = getPublicContact();
+                if (!contact.em) return;
+
+                var subject = encodeURIComponent('Solicitud de préstamo de laboratorio - GAF-FOR-127');
+                window.location.href = 'mailto:' + contact.em + '?subject=' + subject + '&body=' + encodeURIComponent(pendingRequestText);
+                requestSent = true;
+                showToast('Abriendo el correo para enviar la solicitud…', 'success');
+            }
+
+            function copiarSolicitud() {
+                copiarAlPortapapeles(pendingRequestText);
+            }
+
+            function descargarSolicitud() {
+                downloadBlob(
+                    new Blob([pendingRequestText], { type: 'text/plain;charset=utf-8;' }),
+                    'solicitud_prestamo_' + fileStamp() + '.txt'
+                );
+                showToast('Solicitud descargada', 'success');
+            }
+
+            // ==================== QR descargable ====================
+            function getQRDataUrl() {
+                var img = $('#qrcode img');
+                if (img && img.src) return img.src;
+
+                var canvas = $('#qrcode canvas');
+                if (canvas) {
+                    try { return canvas.toDataURL('image/png'); }
+                    catch (e) { /* canvas no disponible */ }
+                }
+
+                return '';
+            }
+
+            function descargarQR() {
+                var dataUrl = getQRDataUrl();
+                if (!dataUrl) {
+                    showToast('Primero genera el QR con "Actualizar QR".', 'error');
+                    return;
+                }
+
+                var a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = 'QR_Formulario_Prestamo.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Imagen del QR descargada', 'success');
+            }
+
+            async function descargarQRPDF() {
+                var input = $('#qrUrl');
+                var base = input.value.trim() || getBaseShareUrl();
+
+                if (!base || !/^https?:\/\//i.test(base)) {
+                    showToast('Publica el formulario y pega la URL pública (https://) antes de generar el PDF.', 'error');
+                    input.focus();
+                    return;
+                }
+
+                var publicUrl = buildPublicUrl(cleanBaseUrl(base));
+                var contact = getStoredContact();
+                var btn = $('#btnQRPDF');
+                var original = btn.innerHTML;
+
+                btn.disabled = true;
+                btn.textContent = 'Generando PDF…';
+
+                try {
+                    var okQr = await generarQR(publicUrl);
+                    if (!okQr) throw new Error('No se pudo generar el QR');
+
+                    var qrData = getQRDataUrl();
+                    if (!qrData) throw new Error('QR no disponible');
+
+                    await ensureScript(JSPDF_URL);
+                    var JsPDF = window.jspdf && window.jspdf.jsPDF;
+                    if (!JsPDF) throw new Error('jsPDF no disponible');
+
+                    var doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                    doc.setProperties({
+                        title: 'QR - Solicitud de préstamo de laboratorio',
+                        subject: 'Formulario GAF-FOR-127',
+                        author: 'Universidad Autónoma de Manizales'
+                    });
+
+                    // Fondo
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(0, 0, 210, 297, 'F');
+
+                    // Encabezado azul
+                    doc.setFillColor(11, 42, 107);
+                    doc.rect(0, 0, 210, 42, 'F');
+                    doc.setFillColor(18, 75, 179);
+                    doc.rect(0, 0, 210, 14, 'F');
+
+                    // Logo sobre placa blanca
+                    doc.setFillColor(255, 255, 255);
+                    doc.roundedRect(14, 6, 90, 30, 3, 3, 'F');
+                    doc.addImage('data:image/png;base64,' + LOGO_B64, 'PNG', 17, 9, 84, 25.1);
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9);
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('GAF-FOR-127 · Versión 1', 196, 23, { align: 'right' });
+
+                    // Título
+                    doc.setTextColor(15, 23, 42);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(16.5);
+                    doc.text('CONTROL PRÉSTAMO DE LABORATORIO,', 14, 55);
+                    doc.text('EQUIPOS Y/O ELEMENTOS', 14, 62);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10.5);
+                    doc.setTextColor(91, 107, 133);
+                    doc.text('Escanea el código QR y completa la solicitud.', 14, 69);
+
+                    // Tarjeta del QR
+                    doc.setFillColor(245, 248, 253);
+                    doc.setDrawColor(219, 227, 240);
+                    doc.roundedRect(55, 78, 100, 108, 4, 4, 'FD');
+                    doc.addImage(qrData, 'PNG', 62, 85, 86, 86);
+
+                    // URL pública
+                    var shownUrl = publicUrl;
+                    try { shownUrl = decodeURIComponent(publicUrl); } catch (e) { /* mantener url */ }
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(6.5);
+                    doc.setTextColor(37, 99, 235);
+                    var urlLines = shownUrl.split(/(?=[?&])/g);
+                    doc.text(urlLines, 105, 173, { align: 'center' });
+
+                    doc.setFontSize(8);
+                    doc.setTextColor(91, 107, 133);
+                    doc.text('Este QR abre únicamente el formulario público.', 105, 195, { align: 'center' });
+
+                    // Instrucciones
+                    doc.setFillColor(238, 242, 249);
+                    doc.roundedRect(20, 204, 170, 58, 4, 4, 'F');
+
+                    doc.setTextColor(15, 23, 42);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(12);
+                    doc.text('¿Cómo enviar la solicitud?', 26, 214);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(60, 72, 90);
+                    doc.text('1. Escanea el código QR con la cámara del celular.', 26, 223);
+                    doc.text('2. Completa los datos del formato institucional.', 26, 229.5);
+                    doc.text('3. Envía la solicitud por WhatsApp o correo al laboratorio.', 26, 236);
+
+                    var contactLine = [];
+                    if (contact.wa) contactLine.push('WhatsApp: +' + contact.wa);
+                    if (contact.em) contactLine.push('Correo: ' + contact.em);
+                    if (contactLine.length) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9.5);
+                        doc.setTextColor(37, 99, 235);
+                        doc.text(contactLine.join('   ·   '), 26, 249);
+                    }
+
+                    // Pie
+                    doc.setDrawColor(219, 227, 240);
+                    doc.line(14, 276, 196, 276);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(91, 107, 133);
+                    doc.text('Universidad Autónoma de Manizales · Acreditación Institucional de Alta Calidad', 105, 283, { align: 'center' });
+                    doc.text('Generado el ' + formatDate(todayISO()) + ' ' + nowTime(), 105, 289, { align: 'center' });
+
+                    doc.save('QR_Formulario_Prestamo_' + fileStamp() + '.pdf');
+                    showToast('PDF con el QR generado', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('No se pudo generar el PDF. Revisa la URL y tu conexión.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                }
+            }
+
+            // ==================== Tema ====================
+            function updateThemeButton(theme) {
+                var btn = $('#themeToggle');
+                if (!btn) return;
+                var dark = theme === 'dark';
+                btn.innerHTML = dark ? '&#9728;' : '&#127769;';
+                btn.setAttribute('aria-label', dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+                btn.title = btn.getAttribute('aria-label');
+            }
+
+            function toggleTheme() {
+                var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                var next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* sin persistencia */ }
+                updateThemeButton(next);
+            }
+
+            // ==================== Inicialización ====================
+            function init() {
+                isAdmin = detectAdminMode();
+                if (isAdmin) {
+                    loadRecords();
+                } else {
+                    state.records = [];
+                }
+                render();
+                applyMode();
+
+                updateThemeButton(document.documentElement.getAttribute('data-theme'));
+
+                // Valores iniciales útiles
+                prefillDefaults();
+
+                var savedUrl = getSavedShareUrl();
+                if (savedUrl) {
+                    $('#qrUrl').value = cleanBaseUrl(savedUrl);
+                } else if (/^https?:/i.test(window.location.href)) {
+                    $('#qrUrl').value = cleanBaseUrl(window.location.href);
+                }
+
+                var contact = getStoredContact();
+                $('#contactoWhatsApp').value = contact.wa;
+                $('#contactoEmail').value = contact.em;
+
+                // Logo: usa la imagen de referencia; si el archivo no está, usa la copia incrustada.
+                var brandLogo = $('#brandLogo');
+                if (brandLogo) {
+                    var useEmbeddedLogo = function () {
+                        if (brandLogo.dataset.fallback === '1') return;
+                        brandLogo.dataset.fallback = '1';
+                        brandLogo.src = 'data:image/png;base64,' + LOGO_B64;
+                    };
+                    if (brandLogo.complete && brandLogo.naturalWidth === 0) useEmbeddedLogo();
+                    else brandLogo.addEventListener('error', useEmbeddedLogo);
+                }
+
+                // Formulario
+                var form = $('#prestamoForm');
+                form.addEventListener('input', function () { if (!LOADING_FLAG) state.dirty = true; });
+                form.addEventListener('change', function () {
+                    if (!LOADING_FLAG) state.dirty = true;
+                    syncReturnDateMin();
+                });
+
+                $('#fechaPrestamo').addEventListener('change', syncReturnDateMin);
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    if (!validateForm()) {
+                        showToast('Revisa los campos marcados en rojo', 'error');
+                        return;
+                    }
+
+                    var data = readForm();
+
+                    if (!isAdmin) {
+                        openSendModal(buildRequestText(data));
+                        return;
+                    }
+
+                    if (state.editingId) {
+                        var record = findRecord(state.editingId);
+                        if (!record) {
+                            showToast('El registro ya no existe', 'error');
+                            stopEdit({ reset: true });
+                            return;
+                        }
+                        Object.keys(data).forEach(function (key) { record[key] = data[key]; });
+                        record.updatedAt = new Date().toISOString();
+                        persist();
+                        render();
+                        showToast('Registro actualizado correctamente', 'success');
+                    } else {
+                        var nuevo = normalizeRecord(data);
+                        nuevo.id = uid();
+                        nuevo.createdAt = new Date().toISOString();
+                        state.records.push(nuevo);
+                        persist();
+                        render();
+                        showToast('Préstamo registrado correctamente', 'success');
+                    }
+
+                    state.dirty = false;
+                    stopEdit({ reset: true });
+                    state.dirty = false;
+                    $('#fechaPrestamo').focus();
+                });
+
+                $('#btnLimpiar').addEventListener('click', function () {
+                    if (state.editingId || state.dirty) {
+                        if (!confirm('¿Limpiar todos los campos del formulario?')) return;
+                    }
+                    stopEdit({ reset: true });
+                    showToast('Formulario limpio');
+                });
+
+                $('#btnCancelEdit').addEventListener('click', function () {
+                    stopEdit({ reset: true });
+                    showToast('Edición cancelada');
+                });
+
+                document.addEventListener('keydown', function (e) {
+                    if (e.key !== 'Escape') return;
+
+                    if (!$('#sendModal').hidden) {
+                        closeSendModal();
+                        return;
+                    }
+
+                    if (!$('#adminModal').hidden) {
+                        closeAdminModal();
+                        return;
+                    }
+
+                    if (state.editingId) {
+                        stopEdit({ reset: true });
+                        showToast('Edición cancelada');
+                    }
+                });
+
+                // Búsqueda y filtros
+                $('#buscar').addEventListener('input', function () {
+                    state.query = this.value;
+                    render();
+                });
+                $('#filtroEstado').addEventListener('change', function () {
+                    state.filter = this.value;
+                    render();
+                });
+
+                // Acciones de la tabla y de las tarjetas móviles
+                function onRecordAction(e) {
+                    var btn = e.target.closest ? e.target.closest('button[data-action]') : null;
+                    if (!btn) return;
+                    var action = btn.getAttribute('data-action');
+                    var id = btn.getAttribute('data-id');
+                    if (action === 'devolver') registrarDevolucion(id);
+                    else if (action === 'editar') startEdit(id);
+                    else if (action === 'eliminar') eliminarRegistro(id);
+                }
+
+                $('#recordsBody').addEventListener('click', onRecordAction);
+                $('#recordsCards').addEventListener('click', onRecordAction);
+
+                // Exportaciones
+                $('#btnCSV').addEventListener('click', exportarCSV);
+                $('#btnExcel').addEventListener('click', exportarExcel);
+                $('#btnJSON').addEventListener('click', exportarJSON);
+                $('#btnPrint').addEventListener('click', function () { window.print(); });
+                $('#btnBorrarTodo').addEventListener('click', limpiarRegistros);
+
+                $('#btnImport').addEventListener('click', function () { $('#fileImport').click(); });
+                $('#fileImport').addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (file) importarJSON(file);
+                    this.value = '';
+                });
+
+                // Compartir
+                $('#btnWhatsApp').addEventListener('click', compartirWhatsApp);
+                $('#btnCopiar').addEventListener('click', copiarEnlace);
+                $('#btnActualizarQR').addEventListener('click', actualizarQR);
+                $('#btnGuardarContacto').addEventListener('click', guardarContacto);
+                $('#btnChangePin').addEventListener('click', cambiarPinAdmin);
+                $('#btnDescargarQR').addEventListener('click', descargarQR);
+                $('#btnQRPDF').addEventListener('click', descargarQRPDF);
+
+                $('#qrDetails').addEventListener('toggle', function () {
+                    if (!this.open) return;
+                    var inputUrl = $('#qrUrl').value.trim();
+                    var url = buildPublicUrl(inputUrl || getBaseShareUrl());
+                    if (qrGeneratedFor === url) return;
+                    generarQR(url);
+                });
+
+                // Acceso administrador
+                $('#btnAdminAccess').addEventListener('click', function () {
+                    if (isAdmin) logoutAdmin();
+                    else openAdminModal();
+                });
+                $('#btnAdminCancel').addEventListener('click', closeAdminModal);
+                $('#btnAdminEnter').addEventListener('click', tryAdminLogin);
+                $('#adminPin').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        tryAdminLogin();
+                    }
+                });
+                $('#adminModal').addEventListener('click', function (e) {
+                    if (e.target === this) closeAdminModal();
+                });
+
+                // Solicitud pública
+                $('#btnSendWhatsApp').addEventListener('click', enviarSolicitudWhatsApp);
+                $('#btnSendEmail').addEventListener('click', enviarSolicitudCorreo);
+                $('#btnCopyRequest').addEventListener('click', copiarSolicitud);
+                $('#btnDownloadRequest').addEventListener('click', descargarSolicitud);
+                $('#btnCloseSend').addEventListener('click', closeSendModal);
+                $('#sendModal').addEventListener('click', function (e) {
+                    if (e.target === this) closeSendModal();
+                });
+
+                // Tema
+                $('#themeToggle').addEventListener('click', toggleTheme);
+
+                // Advertir si hay cambios sin guardar
+                window.addEventListener('beforeunload', function (e) {
+                    if (!state.dirty) return;
+                    e.preventDefault();
+                    e.returnValue = '';
+                    return '';
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>
