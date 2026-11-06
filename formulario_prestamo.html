@@ -503,8 +503,37 @@
         .btn-mini.btn-mini-danger { color: var(--error); }
         .btn-mini.btn-mini-danger:hover { background: var(--error-soft); }
 
-        .edit-banner {
+        .admin-toolbar {
             display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin: 0 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .admin-toolbar-label {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+        }
+
+        .admin-toolbar-btn { padding: 7px 12px; font-size: 0.78rem; }
+
+        .pin-field { margin-top: 12px; }
+
+        .pin-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+
+        .pin-field input { margin-top: 0; }
+
+        .edit-banner {            display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
@@ -1076,6 +1105,11 @@
             </div>
         </section>
 
+        <div class="admin-toolbar admin-only" id="adminToolbar">
+            <span class="admin-toolbar-label">&#128274; Sesión de administrador</span>
+            <button type="button" class="btn btn-secondary admin-toolbar-btn" id="btnChangePinToolbar">&#128273; Cambiar PIN</button>
+        </div>
+
         <div class="edit-banner" id="editBanner" hidden>
             <span>&#9998; <strong>Modo edición:</strong> <span id="editBannerText"></span></span>
             <button type="button" id="btnCancelEdit">Cancelar edición</button>
@@ -1259,7 +1293,7 @@
                     <p class="qr-hint">Si no tienes la URL, usa la publicada en GitHub Pages. <button type="button" class="qr-reset-link" id="btnResetQR">Usar URL publicada</button></p>
                     <p class="qr-hint">El enlace y la URL se guardan únicamente en este navegador.</p>
                     <p class="admin-note">Acceso administrador por PIN. Este control es una barrera de interfaz; para seguridad real se necesita un servidor.</p>
-                    <button type="button" class="btn btn-secondary" id="btnChangePin">Cambiar PIN de este navegador</button>
+                    <button type="button" class="btn btn-secondary" id="btnChangePin">Cambiar PIN</button>
                 </div>
             </div>
         </details>
@@ -1357,6 +1391,36 @@
                 <button type="button" class="btn btn-secondary" id="btnCopyRequest">&#128203; Copiar</button>
                 <button type="button" class="btn btn-secondary" id="btnDownloadRequest">&#128190; Descargar</button>
                 <button type="button" class="btn btn-primary" id="btnCloseSend">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="pinModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
+            <h2 id="pinModalTitle">Cambiar PIN de administrador</h2>
+            <p>El cambio se guarda en este navegador. Para cambiarlo en todos los dispositivos, edita <code>DEFAULT_ADMIN_PIN</code> en el código y vuelve a publicar.</p>
+            <p class="admin-note">Si olvidas el PIN, borra los datos del sitio en este navegador y volverá al PIN publicado.</p>
+
+            <div class="pin-field">
+                <label for="pinActual">PIN actual</label>
+                <input type="password" id="pinActual" inputmode="text" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40" placeholder="PIN actual">
+            </div>
+
+            <div class="pin-field">
+                <label for="pinNuevo">Nuevo PIN</label>
+                <input type="password" id="pinNuevo" inputmode="text" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Mínimo 4 caracteres">
+            </div>
+
+            <div class="pin-field">
+                <label for="pinConfirmar">Confirmar nuevo PIN</label>
+                <input type="password" id="pinConfirmar" inputmode="text" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Repite el nuevo PIN">
+            </div>
+
+            <p class="modal-error" id="pinChangeError" hidden></p>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="btnPinCancel">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnPinSave">Guardar PIN</button>
             </div>
         </div>
     </div>
@@ -1559,26 +1623,61 @@
                 showToast('Acceso administrador concedido', 'success');
             }
 
-            function cambiarPinAdmin() {
-                var actual = prompt('PIN actual:');
-                if (actual === null) return;
+            function openPinModal() {
+                if (!isAdmin) return;
+
+                $('#pinActual').value = '';
+                $('#pinNuevo').value = '';
+                $('#pinConfirmar').value = '';
+                $('#pinChangeError').hidden = true;
+                $('#pinModal').hidden = false;
+                setTimeout(function () { $('#pinActual').focus(); }, 40);
+            }
+
+            function closePinModal() {
+                $('#pinModal').hidden = true;
+            }
+
+            function saveNewPin() {
+                var actual = $('#pinActual').value;
+                var nuevo = $('#pinNuevo').value.trim();
+                var confirmar = $('#pinConfirmar').value.trim();
+                var error = $('#pinChangeError');
+
+                function fail(message) {
+                    error.textContent = message;
+                    error.hidden = false;
+                }
+
                 if (actual !== getAdminPin()) {
-                    showToast('PIN actual incorrecto', 'error');
+                    fail('El PIN actual es incorrecto.');
+                    $('#pinActual').select();
                     return;
                 }
 
-                var nuevo = prompt('Nuevo PIN (mínimo 4 caracteres):');
-                if (nuevo === null) return;
-                nuevo = nuevo.trim();
                 if (nuevo.length < 4) {
-                    showToast('El PIN debe tener al menos 4 caracteres', 'error');
+                    fail('El nuevo PIN debe tener al menos 4 caracteres.');
+                    $('#pinNuevo').focus();
+                    return;
+                }
+
+                if (nuevo !== confirmar) {
+                    fail('La confirmación no coincide con el nuevo PIN.');
+                    $('#pinConfirmar').select();
+                    return;
+                }
+
+                if (nuevo === actual) {
+                    fail('El nuevo PIN debe ser diferente al actual.');
+                    $('#pinNuevo').focus();
                     return;
                 }
 
                 try { localStorage.setItem(ADMIN_PIN_KEY, nuevo); }
-                catch (e) { showToast('No se pudo guardar el PIN en este navegador', 'error'); return; }
+                catch (e) { fail('No se pudo guardar el PIN en este navegador.'); return; }
 
-                showToast('PIN actualizado en este navegador', 'success');
+                closePinModal();
+                showToast('PIN actualizado. Úsalo en el próximo inicio de sesión.', 'success');
             }
 
             function logoutAdmin() {
@@ -2968,6 +3067,11 @@
                 document.addEventListener('keydown', function (e) {
                     if (e.key !== 'Escape') return;
 
+                    if (!$('#pinModal').hidden) {
+                        closePinModal();
+                        return;
+                    }
+
                     if (!$('#sendModal').hidden) {
                         closeSendModal();
                         return;
@@ -3028,7 +3132,8 @@
                 $('#btnActualizarQR').addEventListener('click', actualizarQR);
                 $('#btnGuardarContacto').addEventListener('click', guardarContacto);
                 $('#btnResetQR').addEventListener('click', resetPublicUrl);
-                $('#btnChangePin').addEventListener('click', cambiarPinAdmin);
+                $('#btnChangePin').addEventListener('click', openPinModal);
+                $('#btnChangePinToolbar').addEventListener('click', openPinModal);
                 $('#btnDescargarQR').addEventListener('click', descargarQR);
                 $('#btnQRPDF').addEventListener('click', descargarQRPDF);
 
@@ -3055,6 +3160,22 @@
                 });
                 $('#adminModal').addEventListener('click', function (e) {
                     if (e.target === this) closeAdminModal();
+                });
+
+                // Cambio de PIN
+                $('#btnPinCancel').addEventListener('click', closePinModal);
+                $('#btnPinSave').addEventListener('click', saveNewPin);
+                $('#pinActual').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); $('#pinNuevo').focus(); }
+                });
+                $('#pinNuevo').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); $('#pinConfirmar').focus(); }
+                });
+                $('#pinConfirmar').addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); saveNewPin(); }
+                });
+                $('#pinModal').addEventListener('click', function (e) {
+                    if (e.target === this) closePinModal();
                 });
 
                 // Solicitud pública
