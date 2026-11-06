@@ -31,7 +31,7 @@ Archivos locales listos para escanear:
 
 1. Abrir el formulario.
 2. Pulsar **Administrador** en la cabecera (en móvil aparece como **Admin**).
-3. Ingresar el PIN inicial: **`tomy`**.
+3. Ingresar el PIN inicial: **`david`**.
 
 Desde el panel de administración se pueden ver/editar registros, exportar a CSV/Excel/JSON, imprimir y generar el QR público en PDF.
 
