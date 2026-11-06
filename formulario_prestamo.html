@@ -705,7 +705,7 @@
         }
 
         .qr-container img,
-        .qr-container canvas { display: block; margin: 0 auto; }
+        .qr-container canvas { display: block; margin: 0 auto; width: 160px !important; height: 160px !important; }
 
         .qr-fallback { color: #5f6b7a; font-size: 0.8rem; padding: 48px 10px; }
 
@@ -2460,8 +2460,8 @@
                     container.innerHTML = '';
                     qrInstance = new QRCode(container, {
                         text: url,
-                        width: 160,
-                        height: 160,
+                        width: 640,
+                        height: 640,
                         colorDark: '#202124',
                         colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.H
