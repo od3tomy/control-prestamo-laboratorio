@@ -4,13 +4,17 @@ Formulario web para el registro de solicitudes de préstamo, devoluciones y traz
 
 ## URL pública
 
-Cuando GitHub Pages termine de publicar, la dirección será:
+La página está publicada en:
 
-`https://od3tomy.github.io/control-prestamo-laboratorio/formulario_prestamo.html`
+`https://od3tomy.github.io/control-prestamo-laboratorio/`
 
-El enlace público para compartir por QR debe incluir `?publico=1` y, opcionalmente, el contacto del laboratorio:
+Formulario directo para compartir por QR:
 
 `https://od3tomy.github.io/control-prestamo-laboratorio/formulario_prestamo.html?publico=1`
+
+Afiche PDF con el QR:
+
+`https://od3tomy.github.io/control-prestamo-laboratorio/QR_Control_Prestamo.pdf`
 
 ## Acceso administrador
 
@@ -27,6 +31,8 @@ Desde el panel de administración se pueden ver/editar registros, exportar a CSV
 3. Configurar WhatsApp y/o correo.
 4. Pegar la URL pública y pulsar **Actualizar QR**.
 5. Pulsar **QR en PDF** para descargar el afiche con el código.
+
+> El PDF incluido en el repositorio abre el formulario, pero aún no tiene un WhatsApp/correo configurado. Configura el contacto en el panel y genera un nuevo PDF para que las solicitudes te lleguen directamente.
 
 ## Datos
 
