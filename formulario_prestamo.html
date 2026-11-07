@@ -1936,6 +1936,25 @@
                 });
             }
 
+            async function fetchSheetsData(url) {
+                try {
+                    var response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                    var data = await response.json();
+                    if (!data || typeof data !== 'object') throw new Error('Respuesta inválida');
+                    return data;
+                } catch (e) {
+                    // Respaldo para navegadores que bloquean fetch entre dominios.
+                    return await jsonpRequest(url);
+                }
+            }
+
             async function syncFromSheets(options) {
                 var opts = options || {};
                 var api = getSheetsApiUrl();
@@ -1951,7 +1970,7 @@
 
                 try {
                     var url = api + (api.indexOf('?') >= 0 ? '&' : '?') + 'action=list&token=' + encodeURIComponent(token);
-                    var data = await jsonpRequest(url);
+                    var data = await fetchSheetsData(url);
                     if (!data || !data.ok) throw new Error(data && data.error ? data.error : 'Respuesta inválida');
 
                     var serverRecords = (data.records || []).map(normalizeRecord);
