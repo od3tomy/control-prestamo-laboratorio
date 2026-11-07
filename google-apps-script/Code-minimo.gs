@@ -2,7 +2,6 @@
 // 1. Ejecuta setup() una vez y autoriza los permisos.
 // 2. Implementa como aplicacion web (ejecutar como yo, acceso: cualquier persona).
 // 3. Copia la URL /exec y el TOKEN.
-
 var SHEET_NAME = 'Registros';
 var TOKEN_PROP = 'ADMIN_TOKEN';
 
@@ -25,6 +24,40 @@ var HEADERS = [
   'obsDevolucion'
 ];
 
+var TEXT_COLUMNS = [
+  'createdAt',
+  'updatedAt',
+  'fechaPrestamo',
+  'horaPrestamo',
+  'fechaDevolucion',
+  'horaDevolucion'
+];
+
+function applyTextFormats_(sheet) {
+  var rows = Math.max(sheet.getLastRow() - 1, 1);
+  TEXT_COLUMNS.forEach(function (name) {
+    var index = HEADERS.indexOf(name) + 1;
+    if (index > 0) {
+      sheet.getRange(2, index, rows, 1).setNumberFormat('@');
+    }
+  });
+}
+
+function writeRow_(sheet, rowIndex, record) {
+  if (rowIndex > sheet.getMaxRows()) {
+    sheet.insertRowAfter(sheet.getMaxRows());
+  }
+
+  TEXT_COLUMNS.forEach(function (name) {
+    var index = HEADERS.indexOf(name) + 1;
+    if (index > 0) {
+      sheet.getRange(rowIndex, index).setNumberFormat('@');
+    }
+  });
+
+  sheet.getRange(rowIndex, 1, 1, HEADERS.length).setValues([recordToRow_(record)]);
+}
+
 function setup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAME);
@@ -42,6 +75,8 @@ function setup() {
     sheet.setFrozenRows(1);
     sheet.autoResizeColumns(1, HEADERS.length);
   }
+
+  applyTextFormats_(sheet);
 
   var props = PropertiesService.getScriptProperties();
   var token = props.getProperty(TOKEN_PROP);
@@ -67,6 +102,7 @@ function getSheet_() {
       .setFontColor('#FFFFFF');
     sheet.setFrozenRows(1);
   }
+  applyTextFormats_(sheet);
   return sheet;
 }
 
@@ -81,10 +117,25 @@ function recordToRow_(record) {
   });
 }
 
+function normalizeCell_(key, value) {
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (key === 'createdAt' || key === 'updatedAt') {
+      return value.toISOString();
+    }
+    if (key === 'fechaPrestamo' || key === 'fechaDevolucion') {
+      return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    }
+    if (key === 'horaPrestamo' || key === 'horaDevolucion') {
+      return Utilities.formatDate(value, Session.getScriptTimeZone(), 'HH:mm');
+    }
+  }
+  return value;
+}
+
 function rowToRecord_(headers, row) {
   var record = {};
   for (var i = 0; i < headers.length; i++) {
-    record[headers[i]] = row[i];
+    record[headers[i]] = normalizeCell_(headers[i], row[i]);
   }
   record.cantidad = Number(record.cantidad) || 1;
   return record;
@@ -131,11 +182,11 @@ function upsert_(input) {
     }
   }
 
-  if (rowIndex > 0) {
-    sheet.getRange(rowIndex, 1, 1, HEADERS.length).setValues([recordToRow_(record)]);
-  } else {
-    sheet.appendRow(recordToRow_(record));
+  if (rowIndex === 0) {
+    rowIndex = sheet.getLastRow() + 1;
   }
+
+  writeRow_(sheet, rowIndex, record);
 
   return record;
 }

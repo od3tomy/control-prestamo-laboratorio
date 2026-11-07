@@ -1523,7 +1523,7 @@
             // URL del Web App de Google Apps Script. Se puede dejar vacía y
             // configurarla desde el panel; si se fija aquí, el QR no necesita
             // llevar el parámetro ?api=...
-            var SHEETS_API_URL = '';
+            var SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwgYXmw_diywc9IJZpvAu7H-pkDHZIJ0HGyjiSBuH4Rw_i1QWVK-FG7ZZzOE0EGn86sMw/exec';
             // URL pública publicada en GitHub Pages.
             var DEFAULT_PUBLIC_URL = 'https://od3tomy.github.io/control-prestamo-laboratorio/';
             // PIN de acceso administrador. Puedes cambiarlo aquí.
@@ -2008,6 +2008,12 @@
             }
 
             // ==================== Datos ====================
+            function normalizeDateOnly(value) {
+                var text = String(value == null ? '' : value);
+                var match = /^(\d{4}-\d{2}-\d{2})T/.exec(text);
+                return match ? match[1] : text;
+            }
+
             function normalizeRecord(raw) {
                 var r = raw || {};
                 var tipo = r.tipoUsuario;
@@ -2017,7 +2023,7 @@
                 }
                 return {
                     id: (typeof r.id === 'string' && /^[\w-]{1,64}$/.test(r.id)) ? r.id : uid(),
-                    fechaPrestamo: r.fechaPrestamo || '',
+                    fechaPrestamo: normalizeDateOnly(r.fechaPrestamo || ''),
                     horaPrestamo: r.horaPrestamo || '',
                     tipoUsuario: tipo === 'Externo' ? 'Externo' : (tipo === 'Interno' ? 'Interno' : ''),
                     quienSolicita: r.quienSolicita || '',
@@ -2026,7 +2032,7 @@
                     nombreEquipo: r.nombreEquipo || '',
                     cantidad: Math.max(1, parseInt(r.cantidad, 10) || 1),
                     obsPrestamo: r.obsPrestamo || '',
-                    fechaDevolucion: r.fechaDevolucion || '',
+                    fechaDevolucion: normalizeDateOnly(r.fechaDevolucion || ''),
                     horaDevolucion: r.horaDevolucion || '',
                     estadoLimpieza: r.estadoLimpieza || '',
                     obsDevolucion: r.obsDevolucion || '',
